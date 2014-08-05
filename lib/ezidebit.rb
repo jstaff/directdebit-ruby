@@ -3,15 +3,15 @@ require 'ezidebit/version'
 
 # Resources
 require 'ezidebit/ezidebit_object'
+require 'ezidebit/soap_error'
+require 'ezidebit/customer'
 
 module Ezidebit
   @api_base = 'https://api.ezidebit.com.au/v3-3/nonpci'
-
-  @verify_ssl_certs = true
-  @CERTIFICATE_VERIFIED = false
+  @api_version = '1.0'
 
   class << self
-    attr_accessor :api_key, :api_base, :verify_ssl_certs, :api_version
+    attr_accessor :api_digital_key, :api_base, :api_version
   end
 
   def self.hi
