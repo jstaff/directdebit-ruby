@@ -1,3 +1,6 @@
+# Version
+require 'ezidebit/version'
+
 # Resources
 require 'ezidebit/ezidebit_object'
 
