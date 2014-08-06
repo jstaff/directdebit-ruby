@@ -1,7 +1,8 @@
 module Ezidebit
   class Customer < EzidebitObject
 
-  	SOAP_ACTION='https://px.ezidebit.com.au/INonPCIService/AddCustomer'
+  	#TODO: Use Base API URL and add action to it
+    SOAP_ACTION='https://px.ezidebit.com.au/INonPCIService/AddCustomer'
 
   	def self.add_customer(options={})
 	  response = soap_it!(SOAP_ACTION) do |xml|
@@ -13,11 +14,24 @@ module Ezidebit
           options.each { |key,value| xml['px'].send(key, value)}
         end
       end
-  	  #parse_customer_response(response)
+  	  parse_add_customer_response(response)
     end
   	 
   	def self.change_customer_status
   	end
+
+
+    def self.parse_add_customer_response(response)
+      if response then
+        xml    = Nokogiri::XML(response.body)
+        data   = {}
+        data["CustomerRef"] = xml.xpath("//a:CustomerRef", 
+          {a: 'http://schemas.datacontract.org/2004/07/Ezidebit.PaymentExchange.V3_3.DataContracts'}).text
+        return data
+      else
+        false
+      end
+    end
 
   end
 end

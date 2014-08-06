@@ -8,10 +8,6 @@ module Ezidebit
   	def last_response
   		@@last_response
   	end
-    
-    def self.hi 
-	   "hello from #{self}"
-    end
 	
     def self.construct_envelope(&block)
       Nokogiri::XML::Builder.new do |xml|
@@ -35,7 +31,7 @@ module Ezidebit
       process_response(response)
     end
 
-    # Processes the response and decides whether to handle an error or
+    # Processes the response and decides whether to handle an error/fault or
     # whether to return the content
     def self.process_response(response)
       @@last_response = response
@@ -53,7 +49,7 @@ module Ezidebit
       end
     end
 
-    # Parses a soap:Fault error and raises it as a Ezidebit::SoapError
+    # Parses a Error and raises it as a Ezidebit::SoapError
     def self.handle_error(response)
       xml   = Nokogiri::XML(response.body)
       xml.remove_namespaces!
@@ -66,7 +62,7 @@ module Ezidebit
       raise Ezidebit::SoapError.new("Error from server: #{msg}", @@last_request, @@last_response)
     end
 
-     # Parses a soap:Fault error and raises it as a Ezidebit::SoapError
+     # Parses a Fault error and raises it as a Ezidebit::SoapError
     def self.handle_fault(response)
       xml   = Nokogiri::XML(response.body)
       xml.remove_namespaces!
