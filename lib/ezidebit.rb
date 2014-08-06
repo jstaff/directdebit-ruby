@@ -1,3 +1,6 @@
+require 'nokogiri'
+require 'typhoeus'
+
 # Version
 require 'ezidebit/version'
 
@@ -8,7 +11,7 @@ require 'ezidebit/customer'
 
 module Ezidebit
   @api_base = 'https://api.ezidebit.com.au/v3-3/nonpci'
-  @api_version = '1.0'
+  @api_version = '1.0-2'
 
   class << self
     attr_accessor :api_digital_key, :api_base, :api_version

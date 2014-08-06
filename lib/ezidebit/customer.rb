@@ -14,7 +14,7 @@ module Ezidebit
         end
       end
   	  #parse_customer_response(response)
-	end
+    end
   	 
   	def self.change_customer_status
   	end
