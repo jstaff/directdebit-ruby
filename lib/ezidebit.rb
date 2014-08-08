@@ -6,6 +6,7 @@ require 'ezidebit/version'
 
 # Resources
 require 'ezidebit/ezidebit_object'
+require 'ezidebit/util'
 require 'ezidebit/soap_error'
 require 'ezidebit/customer'
 
