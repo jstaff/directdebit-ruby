@@ -30,7 +30,11 @@ module Ezidebit
       if response then
         xml    = Nokogiri::XML(response.body)
         data   = {}
-        data[:Status] = xml.xpath("//ns:AddPaymentResponse/Data", 
+         data[:Status] = xml.xpath("//ns:AddPaymentResponse/ns:AddPaymentResult/ns:Data", 
+          {ns: 'https://px.ezidebit.com.au/'} ).text
+        data[:Error] = xml.xpath("//ns:AddPaymentResponse/ns:AddPaymentResult/ns:Error", 
+          {ns: 'https://px.ezidebit.com.au/'} ).text
+        data[:ErrorMessage] = xml.xpath("//ns:AddPaymentResponse/ns:AddPaymentResult/ns:ErrorMessage", 
           {ns: 'https://px.ezidebit.com.au/'} ).text
         return data
       else
