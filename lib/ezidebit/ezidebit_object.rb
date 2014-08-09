@@ -45,7 +45,6 @@ module Ezidebit
       elsif xml.xpath("//Fault").any? 
         handle_fault(response)
       else
-        puts "Response: #{response.inspect}"
         return response
       end
     end
@@ -65,7 +64,6 @@ module Ezidebit
 
      # Parses a Fault error and raises it as a Ezidebit::SoapError
     def self.handle_fault(response)
-      puts "Response: #{response.inspect}"
       xml   = Nokogiri::XML(response.body)
       xml.remove_namespaces!
       xpath = '//faultstring'

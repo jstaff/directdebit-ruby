@@ -4,9 +4,11 @@ module Ezidebit
   	#TODO: Use Base API URL and add action to it
     SOAP_ACTION='https://px.ezidebit.com.au/INonPCIService/AddCustomer'
     UPDATE_STATUS_ACTION = 'https://px.ezidebit.com.au/INonPCIService/ChangeCustomerStatus'
+    GET_INFO_ACTION = 'https://px.ezidebit.com.au/INonPCIService/GetCustomerDetails'
 
-  	def self.add_customer(options={})
-        response = soap_it!(SOAP_ACTION) do |xml|
+  	#This method will add a new customer.
+    def self.add_customer(options={})
+      response = soap_it!(SOAP_ACTION) do |xml|
    	    xml['px'].AddCustomer do
           xml['px'].DigitalKey Ezidebit::api_digital_key
           options.each { |key,value| xml['px'].send(key, value)}
@@ -14,9 +16,22 @@ module Ezidebit
       end
   	  parse_add_customer_response(response)
     end
+
+    #This method retrieves details about the given Customer.
+    def self.get_customer_details(ezi_debit_customer_id = "", your_system_reference = "")
+      response = soap_it!(GET_INFO_ACTION) do |xml|
+        xml['px'].GetCustomerDetails do
+          xml['px'].DigitalKey Ezidebit::api_digital_key
+          xml['px'].EziDebitCustomerID ezi_debit_customer_id
+          xml['px'].YourSystemReference your_system_reference
+        end
+      end
+      parse_get_customer_details(response)
+    end
   	 
+    #This method will change the status of a customer.
   	def self.change_customer_status(options={})
-        response = soap_it!(UPDATE_STATUS_ACTION) do |xml|
+      response = soap_it!(UPDATE_STATUS_ACTION) do |xml|
         xml['px'].ChangeCustomerStatus do
           xml['px'].DigitalKey Ezidebit::api_digital_key
           options.each { |key,value| xml['px'].send(key, value)}
@@ -43,6 +58,24 @@ module Ezidebit
         data   = {}
         data[:Status] = xml.xpath("//ns:ChangeCustomerStatusResponse/Data", 
           {ns: 'https://px.ezidebit.com.au/'} ).text
+        return data
+      else
+        false
+      end
+    end
+
+    def self.parse_get_customer_details(response)
+      if response then
+        xml    = Nokogiri::XML(response.body)
+        data   = {}
+        fieldnames = ['AddressLine1', 'AddressLine2', 'AddressPostCode', 'AddressState', 'AddressSuburb', 'ContractStartDate',
+          'CustomerFirstName', 'CustomerName', 'Email', 'EziDebitCustomerID', 'MobilePhone', 'PaymentMethod', 'PaymentPeriod', 
+          'PaymentPeriodDayOfMonth', 'PaymentPeriodDayOfWeek', 'SmsExpiredCard', 'SmsFailedNotification', 'SmsPaymentReminder',
+          'StatusCode', 'StatusDescription', 'TotalPaymentsFailed', 'TotalPaymentsFailedAmount', 'TotalPaymentsSuccessful', 
+          'TotalPaymentsSuccessfulAmount', 'YourGeneralReference', 'YourSystemReference']
+        fieldnames.each do | fieldname|
+          data[fieldname] = xml.xpath("//xmlns:GetCustomerDetailsResponse/xmlns:GetCustomerDetailsResult/xmlns:Data/xmlns:#{fieldname}",  {xmlns: 'https://px.ezidebit.com.au/'} ).text
+        end
         return data
       else
         false
