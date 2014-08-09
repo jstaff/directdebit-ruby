@@ -5,6 +5,7 @@ module Ezidebit
     SOAP_ACTION='https://px.ezidebit.com.au/INonPCIService/AddCustomer'
     UPDATE_STATUS_ACTION = 'https://px.ezidebit.com.au/INonPCIService/ChangeCustomerStatus'
     GET_INFO_ACTION = 'https://px.ezidebit.com.au/INonPCIService/GetCustomerDetails'
+    EDIT_BANK_ACCOUNT = 'https://px.ezidebit.com.au/IPCIService/EditCustomerBankAccount'
 
   	#This method will add a new customer.
     def self.add_customer(options={})
@@ -39,6 +40,17 @@ module Ezidebit
       end
       parse_change_customer_status_response(response)
   	end
+
+    #This method will either create a new bank account for a customer or update the bank account if already exists
+    def self.edit_bank_account(options={})
+      response = soap_it!(true, EDIT_BANK_ACCOUNT) do |xml|
+        xml['px'].EditCustomerBankAccount do
+          xml['px'].DigitalKey Ezidebit::api_digital_key
+          options.each { |key,value| xml['px'].send(key, value)}
+        end
+      end
+      parse_edit_bank_account_response(response)
+    end
 
     def self.parse_add_customer_response(response)
       if response then
@@ -76,6 +88,22 @@ module Ezidebit
         fieldnames.each do | fieldname|
           data[fieldname] = xml.xpath("//xmlns:GetCustomerDetailsResponse/xmlns:GetCustomerDetailsResult/xmlns:Data/xmlns:#{fieldname}",  {xmlns: 'https://px.ezidebit.com.au/'} ).text
         end
+        return data
+      else
+        false
+      end
+    end
+
+    def self.parse_edit_bank_account_response(response)
+      if response then
+        xml    = Nokogiri::XML(response.body)
+        data   = {}
+        data[:Status] = xml.xpath("//ns:EditCustomerBankAccountResponse/ns:EditCustomerBankAccountResult/ns:Data", 
+          {ns: 'https://px.ezidebit.com.au/'} ).text
+        data[:Error] = xml.xpath("//ns:EditCustomerBankAccountResponse/ns:EditCustomerBankAccountResult/ns:Error", 
+          {ns: 'https://px.ezidebit.com.au/'} ).text
+        data[:ErrorMessage] = xml.xpath("//ns:EditCustomerBankAccountResponse/ns:EditCustomerBankAccountResult/ns:ErrorMessage", 
+          {ns: 'https://px.ezidebit.com.au/'} ).text
         return data
       else
         false

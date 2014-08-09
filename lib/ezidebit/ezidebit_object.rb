@@ -21,10 +21,16 @@ module Ezidebit
     end
 
     # Performs the SOAP request
-    def self.soap_it!(soap_action, &block)
+    def self.soap_it!(pci=false, soap_action, &block)
       data = construct_envelope(&block)
       @@last_request = data
-      response = Typhoeus::Request.post('https://api.demo.ezidebit.com.au/v3-3/nonpci',
+      endpoint = ""
+      if pci
+        endpoint = 'https://api.demo.ezidebit.com.au/v3-3/pci'
+      else
+        endpoint = 'https://api.demo.ezidebit.com.au/v3-3/nonpci'
+      end  
+      response = Typhoeus::Request.post(endpoint,
                               :body    => data.to_xml,
                               :headers => {'Content-Type' => "text/xml;charset=UTF-8", 'SOAPAction' => soap_action})
 
