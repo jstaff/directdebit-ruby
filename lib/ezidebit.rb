@@ -9,6 +9,7 @@ require 'ezidebit/ezidebit_object'
 require 'ezidebit/util'
 require 'ezidebit/soap_error'
 require 'ezidebit/customer'
+require 'ezidebit/payment'
 
 module Ezidebit
   @api_base = 'https://api.ezidebit.com.au/v3-3/nonpci'
