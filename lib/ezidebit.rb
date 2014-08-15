@@ -12,19 +12,15 @@ require 'ezidebit/customer'
 require 'ezidebit/payment'
 
 module Ezidebit
-  @api_base = 'https://api.ezidebit.com.au/v3-3/nonpci'
-  @api_version = '1.0-2'
+  @api_base = 'https://api.ezidebit.com.au/'
+  @api_version = 'v3-3'
 
   class << self
     attr_accessor :api_digital_key, :api_base, :api_version
   end
 
-  def self.hi
-    puts "Hello world!"
-  end
-
   def self.api_url(url='')
-    @api_base + url
+    @api_base + @api_version + "/" + url
   end
 
 

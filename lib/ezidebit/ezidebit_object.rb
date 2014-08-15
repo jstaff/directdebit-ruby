@@ -26,10 +26,11 @@ module Ezidebit
       @@last_request = data
       endpoint = ""
       if pci
-        endpoint = 'https://api.demo.ezidebit.com.au/v3-3/pci'
+        endpoint = Ezidebit.api_url "pci"
       else
-        endpoint = 'https://api.demo.ezidebit.com.au/v3-3/nonpci'
+        endpoint = Ezidebit.api_url "nonpci"
       end  
+      puts "Request: #{data.to_xml}"
       response = Typhoeus::Request.post(endpoint,
                               :body    => data.to_xml,
                               :headers => {'Content-Type' => "text/xml;charset=UTF-8", 'SOAPAction' => soap_action})
@@ -43,6 +44,8 @@ module Ezidebit
       @@last_response = response
 
       xml = Nokogiri::XML(response.body)
+
+      puts "Response: #{xml.to_xml}"
 
       xml.remove_namespaces!
 

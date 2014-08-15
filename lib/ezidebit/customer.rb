@@ -1,7 +1,6 @@
 module Ezidebit
   class Customer < EzidebitObject
 
-  	#TODO: Use Base API URL and add action to it
     ADD_CUSTOMER_ACTION='https://px.ezidebit.com.au/INonPCIService/AddCustomer'
     EDIT_CUSTOMER_ACTION='https://px.ezidebit.com.au/INonPCIService/EditCustomerDetails'
     UPDATE_STATUS_ACTION = 'https://px.ezidebit.com.au/INonPCIService/ChangeCustomerStatus'
