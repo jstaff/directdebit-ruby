@@ -30,7 +30,7 @@ module Ezidebit
       else
         endpoint = Ezidebit.api_url "nonpci"
       end  
-      puts "Request: #{data.to_xml}"
+      Ezidebit.logger.debug "Request: #{data.to_xml}"
       response = Typhoeus::Request.post(endpoint,
                               :body    => data.to_xml,
                               :headers => {'Content-Type' => "text/xml;charset=UTF-8", 'SOAPAction' => soap_action})
@@ -45,7 +45,7 @@ module Ezidebit
 
       xml = Nokogiri::XML(response.body)
 
-      puts "Response: #{xml.to_xml}"
+      Ezidebit.logger.debug "Response: #{xml.to_xml}"
 
       xml.remove_namespaces!
 

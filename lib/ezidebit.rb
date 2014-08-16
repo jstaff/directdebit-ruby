@@ -1,5 +1,6 @@
 require 'nokogiri'
 require 'typhoeus'
+require 'logger'
 
 # Version
 require 'ezidebit/version'
@@ -15,8 +16,12 @@ module Ezidebit
   @api_base = 'https://api.ezidebit.com.au/'
   @api_version = 'v3-3'
 
+  @logger = Logger.new(STDOUT)
+  @logger.level = Logger::WARN
+
+
   class << self
-    attr_accessor :api_digital_key, :api_base, :api_version
+    attr_accessor  :logger, :api_digital_key, :api_base, :api_version
   end
 
   def self.api_url(url='')

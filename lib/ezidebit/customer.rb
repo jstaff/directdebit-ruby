@@ -169,7 +169,7 @@ module Ezidebit
           'ManuallyAddedPayment']
         payments_nodeset = xml.xpath("//xmlns:GetScheduledPaymentsResponse/xmlns:GetScheduledPaymentsResult/xmlns:Data/xmlns:ScheduledPayment",  
           {xmlns: 'https://px.ezidebit.com.au/'} ).map { |node| node}
-        puts "Payment nodeset count: #{payments_nodeset.count}"
+        Ezidebit.logger.debug  "Payment nodeset count: #{payments_nodeset.count}"
         payments_nodeset.each do |payment_node|
           data = Hash.new
           fieldnames.each do | fieldname|

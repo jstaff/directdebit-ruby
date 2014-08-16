@@ -13,7 +13,7 @@ Gem::Specification.new do |s|
   s.homepage    = 'https://github.com/jstaff/ezidebit-ruby/'
   s.license     = 'MIT'
 
-  s.add_dependency "savon",     "~> 2.3.0"
+  s.add_dependency "logger"
   s.add_dependency "nokogiri"
   s.add_dependency "typhoeus"
 
