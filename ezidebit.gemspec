@@ -15,7 +15,7 @@ Gem::Specification.new do |s|
 
   s.add_dependency "savon",     "~> 2.3.0"
   s.add_dependency "nokogiri"
-   s.add_dependency "typhoeus"
+  s.add_dependency "typhoeus"
 
   s.files = `git ls-files`.split("\n")
 end
