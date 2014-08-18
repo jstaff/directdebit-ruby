@@ -29,7 +29,7 @@ module Ezidebit
           options.each { |key,value| xml['px'].send(key, value)}
         end
       end
-      parse_generic_status_response(response, 'EditCustomerDetailsResponse')
+      parse_generic_status_response(response, 'EditCustomerDetails')
     end
 
     #This method retrieves details about the given Customer.
@@ -95,8 +95,8 @@ module Ezidebit
     def self.add_bank_debit(options={})
       response = soap_it!(true, ADD_BANK_DEBIT_ACTION) do |xml|
           xml['px'].AddBankDebit do
-            xml['px'].DigitalKey Ezidebit::api_digital_key
-            options.each { |key,value| xml['px'].send(key, value)}
+          xml['px'].DigitalKey Ezidebit::api_digital_key
+          options.each { |key,value| xml['px'].send(key, value)}
         end
       end
       parse_add_bank_debit_response(response)
