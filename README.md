@@ -9,7 +9,7 @@ Ezidebit-ruby is a ruby client for the Ezidebit Web Services SOAP API.
 
 gem 'ezidebit', :github => 'jstaff/ezidebit-ruby', :branch => 'master'
 
-## Setup
+## Configuration
 
 ```
 Ezidebit.api_base="https://api.demo.ezidebit.com.au/"
@@ -21,12 +21,12 @@ Ezidebit.api_digital_key='XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX'
 Ezidebit.logger.level = Logger::DEBUG
 ```
 
-##Supported Actions
+##Examples
 
 ### Add Ezidebit Customer
 
 ```
-customer = {
+Ezidebit::Customer.add_customer({
    YourSystemReference: "123",
    YourGeneralReference: "1234",
    LastName: "Last Name",
@@ -42,17 +42,14 @@ customer = {
    SmsPaymentReminder: "NO",
    SmsFailedNotification: "NO",
    SmsExpiredCard: "NO",
-   Username: "WebServiceUser"
-}
-
-
-Ezidebit::Customer.add_customer(customer)
+   Username: "WebServiceUser"})
 ```
 
 ### Edit Ezidebit Customer
 
 ```
-edit_customer = {
+
+Ezidebit::Customer.edit_customer({
    EziDebitCustomerID: "",
    YourSystemReference: "123",
    NewYourSystemReference: "",
@@ -69,56 +66,44 @@ edit_customer = {
    SmsPaymentReminder: "NO",
    SmsFailedNotification: "NO",
    SmsExpiredCard: "NO",
-   Username: "WebServiceUser"
-}
-
-Ezidebit::Customer.edit_customer(edit_customer)
+   Username: "WebServiceUser"})
 ```
 ### Change Ezidebit Customer Status
 
 ```
-customer_status = {
+Ezidebit::Customer.change_customer_status({
    EziDebitCustomerID: "",
    YourSystemReference: "243",
    NewStatus: "A",
-   Username: "WebServiceUser"
-}
-
-Ezidebit::Customer.change_customer_status(customer_status)
+   Username: "WebServiceUser"})
 ```
 
 ### Add Manual Payment To Ezidebit Customer
 ```
-payment = {
+Ezidebit::Payment.add_payment({
    EziDebitCustomerID: "",
    YourSystemReference: "123",
    DebitDate: "2020-01-01",
    PaymentAmountInCents: "2000",
    PaymentReference: "manual payment test",
-   Username: "WebServiceUser"
-}
-
-Ezidebit::Payment.add_payment(payment)
+   Username: "WebServiceUser"})
 ```
 
 ### Add Bank Account to Ezidebit Customer
 ```
-bank_account = {
+Ezidebit::Customer.edit_bank_account({
    EziDebitCustomerID: "",
    YourSystemReference: "123",
    BankAccountName: "Joe Smith",
    BankAccountBSB: "064001",
    BankAccountNumber: "1234",
    Reactivate: "YES",
-   Username: "WebServiceUser"
-}
-
-Ezidebit::Customer.edit_bank_account(bank_account)
+   Username: "WebServiceUser"})
 ```
 
 ### Add Payment Schedule to Ezidebit Customer
 ```
-customer_schedule = {
+Ezidebit::Customer.create_schedule({
    EziDebitCustomerID: "",
    YourSystemReference: "123",
    ScheduleStartDate: "2020-01-01",
@@ -133,15 +118,12 @@ customer_schedule = {
    LimitToNumberOfPayments: "12",
    LimitToTotalAmountInCents: "0",
    KeepManualPayments: "YES",
-   Username: "WebServiceUser"
-}
-
-Ezidebit::Customer.create_schedule(customer_schedule)
+   Username: "WebServiceUser"})
 ```
 
 ### Add Bank Debit to Ezidebit Customer
 ```
-bank_debit = {
+Ezidebit::Customer.add_bank_debit({
    YourSystemReference: "1234",
    YourGeneralReference: "",
    NewYourSystemReference: "",
@@ -158,8 +140,5 @@ bank_debit = {
    msPaymentReminder: "NO",
    SmsFailedNotification: "NO",
    SmsExpiredCard: "NO",
-   Username: "WebServiceUser"
-}
-
-Ezidebit::Customer.add_bank_debit(bank_debit)
+   Username: "WebServiceUser"})
 ```
