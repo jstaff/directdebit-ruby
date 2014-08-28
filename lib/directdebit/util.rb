@@ -1,4 +1,4 @@
-module Ezidebit
+module DirectDebit
   class Util
 
     #Nokogiri::XML::Builder uses method missing to build xml elements, 

@@ -1,4 +1,4 @@
-module Ezidebit
+module DirectDebit
   class SoapError < StandardError
     attr_reader :last_request, :last_response
 
