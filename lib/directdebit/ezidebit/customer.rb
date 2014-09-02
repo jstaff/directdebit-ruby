@@ -20,9 +20,8 @@ module DirectDebit
             options.each { |key,value| xml['px'].send(key, value)}
           end
         end
-
         response = self.request_it!
-    	  parse_add_customer_response(response)
+        parse(response, "add_customer_response")
       end
 
       #This method will add a new customer.
@@ -34,7 +33,7 @@ module DirectDebit
           end
         end
         response = self.request_it!
-        parse_generic_status_response(response, 'EditCustomerDetails')
+        parse(response, "generic_status_response", 'EditCustomerDetails')
       end
 
       #This method retrieves details about the given Customer.
@@ -47,7 +46,7 @@ module DirectDebit
           end
         end
         response = self.request_it!
-        parse_get_customer_details(response)
+        parse(response, "get_customer_details")
       end
     	 
       #This method will change the status of a customer.
@@ -59,7 +58,7 @@ module DirectDebit
           end
         end
         response = self.request_it!
-        parse_generic_status_response(response, 'ChangeCustomerStatus')
+        parse(response, "generic_status_response", 'ChangeCustomerStatus')
     	end
 
       #This method will either create a new bank account for a customer or update the bank account if already exists
@@ -71,7 +70,7 @@ module DirectDebit
           end
         end
         response = self.request_it!
-        parse_generic_status_response(response, 'EditCustomerBankAccount')
+        parse(response, "generic_status_response", 'EditCustomerBankAccount')
       end
 
 
@@ -84,7 +83,7 @@ module DirectDebit
           end
         end
         response = self.request_it!
-        parse_generic_status_response(response, 'CreateSchedule')
+        parse(response, "generic_status_response", 'CreateSchedule')
       end
 
       #Add/Edit customer and payment
@@ -96,69 +95,60 @@ module DirectDebit
           end
         end
         response = self.request_it!
-        parse_add_bank_debit_response(response)
+        parse(response, "add_bank_debit_response")
       end
 
-      def parse_add_bank_debit_response(response)
-        if response then
-          xml    = Nokogiri::XML(response.body)
-          data   = {}
-          data[:CustomerRef] = xml.xpath("//a:CustomerRef", 
-            {a: 'http://schemas.datacontract.org/2004/07/Ezidebit.PaymentExchange.V3_3.DataContracts'}).text
-          return data
+      def parse(response, type, generic_tag = nil)
+        if response
+          xml = Nokogiri::XML(response.body)
+          if(generic_tag == nil)
+            return self.send("parse_#{type}", xml)
+          else
+            return self.send("parse_#{type}", xml, generic_tag)
+          end
         else
-          false
+         return false
         end
+      end
+
+      def parse_add_bank_debit_response(xml)
+        data   = {}
+        data[:CustomerRef] = xml.xpath("//a:CustomerRef", 
+          {a: 'http://schemas.datacontract.org/2004/07/Ezidebit.PaymentExchange.V3_3.DataContracts'}).text
+        data
       end    
 
-      def parse_add_customer_response(response)
-        if response then
-          xml    = Nokogiri::XML(response.body)
-          data   = {}
-          data[:CustomerRef] = xml.xpath("//a:CustomerRef", 
-            {a: 'http://schemas.datacontract.org/2004/07/Ezidebit.PaymentExchange.V3_3.DataContracts'}).text
-          return data
-        else
-          false
+      def parse_add_customer_response(xml)
+        data   = {}
+        data[:CustomerRef] = xml.xpath("//a:CustomerRef", 
+          {a: 'http://schemas.datacontract.org/2004/07/Ezidebit.PaymentExchange.V3_3.DataContracts'}).text
+        data
+      end
+
+      def parse_get_customer_details(xml)
+        data   = {}
+        fieldnames = ['AddressLine1', 'AddressLine2', 'AddressPostCode', 'AddressState', 'AddressSuburb', 'ContractStartDate',
+          'CustomerFirstName', 'CustomerName', 'Email', 'EziDebitCustomerID', 'MobilePhone', 'PaymentMethod', 'PaymentPeriod', 
+          'PaymentPeriodDayOfMonth', 'PaymentPeriodDayOfWeek', 'SmsExpiredCard', 'SmsFailedNotification', 'SmsPaymentReminder',
+          'StatusCode', 'StatusDescription', 'TotalPaymentsFailed', 'TotalPaymentsFailedAmount', 'TotalPaymentsSuccessful', 
+          'TotalPaymentsSuccessfulAmount', 'YourGeneralReference', 'YourSystemReference']
+        fieldnames.each do | fieldname|
+          data[fieldname] = xml.xpath("//xmlns:GetCustomerDetailsResponse/xmlns:GetCustomerDetailsResult/xmlns:Data/xmlns:#{fieldname}",  
+            {xmlns: 'https://px.ezidebit.com.au/'} ).text
         end
+        data
       end
 
-      def parse_get_customer_details(response)
-        if response then
-          xml    = Nokogiri::XML(response.body)
-          data   = {}
-          fieldnames = ['AddressLine1', 'AddressLine2', 'AddressPostCode', 'AddressState', 'AddressSuburb', 'ContractStartDate',
-            'CustomerFirstName', 'CustomerName', 'Email', 'EziDebitCustomerID', 'MobilePhone', 'PaymentMethod', 'PaymentPeriod', 
-            'PaymentPeriodDayOfMonth', 'PaymentPeriodDayOfWeek', 'SmsExpiredCard', 'SmsFailedNotification', 'SmsPaymentReminder',
-            'StatusCode', 'StatusDescription', 'TotalPaymentsFailed', 'TotalPaymentsFailedAmount', 'TotalPaymentsSuccessful', 
-            'TotalPaymentsSuccessfulAmount', 'YourGeneralReference', 'YourSystemReference']
-          fieldnames.each do | fieldname|
-            data[fieldname] = xml.xpath("//xmlns:GetCustomerDetailsResponse/xmlns:GetCustomerDetailsResult/xmlns:Data/xmlns:#{fieldname}",  
-              {xmlns: 'https://px.ezidebit.com.au/'} ).text
-          end
-          return data
-        else
-          false
-        end
+      def parse_generic_status_response(xml, method_name)
+        data   = {}
+        data[:Status] = xml.xpath("//ns:#{method_name}Response/ns:#{method_name}Result/ns:Data", 
+          {ns: 'https://px.ezidebit.com.au/'} ).text
+        data[:Error] = xml.xpath("//ns:#{method_name}Response/ns:#{method_name}Result/ns:Error", 
+          {ns: 'https://px.ezidebit.com.au/'} ).text
+        data[:ErrorMessage] = xml.xpath("//ns:#{method_name}Response/ns:#{method_name}Result/ns:ErrorMessage", 
+          {ns: 'https://px.ezidebit.com.au/'} ).text
+        data
       end
-
-      def parse_generic_status_response(response, method_name)
-        if response then
-          xml    = Nokogiri::XML(response.body)
-          data   = {}
-          data[:Status] = xml.xpath("//ns:#{method_name}Response/ns:#{method_name}Result/ns:Data", 
-            {ns: 'https://px.ezidebit.com.au/'} ).text
-          data[:Error] = xml.xpath("//ns:#{method_name}Response/ns:#{method_name}Result/ns:Error", 
-            {ns: 'https://px.ezidebit.com.au/'} ).text
-          data[:ErrorMessage] = xml.xpath("//ns:#{method_name}Response/ns:#{method_name}Result/ns:ErrorMessage", 
-            {ns: 'https://px.ezidebit.com.au/'} ).text
-          return data
-        else
-          false
-        end 
-      end
-
-      
 
     end
   end
