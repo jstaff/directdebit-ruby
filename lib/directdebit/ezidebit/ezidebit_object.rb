@@ -17,6 +17,14 @@ module DirectDebit
         end
       end
 
+      def self.api_url(url='')
+        if  url != ''
+          DirectDebit::Ezidebit.api_base + DirectDebit::Ezidebit.api_version + "/" + url
+        else
+          DirectDebit::Ezidebit.api_base + DirectDebit::Ezidebit.api_version
+        end
+      end
+    
     end
   end
 end

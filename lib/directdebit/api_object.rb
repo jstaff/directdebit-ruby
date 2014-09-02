@@ -1,6 +1,16 @@
 module DirectDebit
   class ApiObject
 
+    attr_reader :end_point, :request
+
+    @@last_request = ""
+    @@last_response = ""
+
+    def initialize
+      @end_point =  self.class.api_url
+      @request =  Typhoeus::Request.new("")
+    end
+
   	def last_response
   		@@last_response
   	end
@@ -30,33 +40,30 @@ module DirectDebit
     end
 
     def self.api_url(url='')
-      if  url != ''
-        DirectDebit::Ezidebit.api_base + DirectDebit::Ezidebit.api_version + "/" + url
-      else
-        DirectDebit::Ezidebit.api_base + DirectDebit::Ezidebit.api_version
-      end
+        raise "This api_url class method be defined in implementing type of ApiObject"
     end
 
-    # Performs soap request
-    #TODO: pass in type
-    def self.request_it!(xml_type = "xml", endpoint = "", soap_action = "", &block)
-      #data = construct_soap_envelope(&block)
-      data = construct_xml(xml_type, &block)
-      
 
-      @@last_request = data
-     
-      #add extra endpoint if needed
-      endpoint = self.api_url endpoint 
-      
+    def end_point=(endpoint = "")
+      @end_point = self.class.api_url endpoint 
+    end
+
+    def create_request(end_point = "", soap_action = "", &block)
+      data = self.class.construct_xml(self.class.xml_type, &block)
+      self.end_point = end_point
       DirectDebit.logger.debug "XML Message: #{data.to_xml}"
-       DirectDebit.logger.debug "End Point: #{endpoint}"
-      #TODO: set extra request headers here
-      response = Typhoeus::Request.post(endpoint,
-                              :body    => data.to_xml,
-                              :headers => {'Content-Type' => "text/xml;charset=UTF-8", 'SOAPAction' => soap_action})
+      DirectDebit.logger.debug "End Point: #{self.end_point}"
+      @request = Typhoeus::Request.new(self.end_point,
+        :method  => :post,
+        :body    => data.to_xml,
+        :headers => {'Content-Type' => "text/xml;charset=UTF-8", 'SOAPAction' => soap_action})
+    end
 
-      process_response(response)
+
+    # Performs soap request
+    def request_it!
+      response = @request.run
+      self.class.process_response(response)
     end
 
     # Processes the response and decides whether to handle an error/fault or

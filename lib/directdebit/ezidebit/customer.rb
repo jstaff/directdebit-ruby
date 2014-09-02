@@ -13,59 +13,64 @@ module DirectDebit
 
 
     	#This method will add a new customer.
-      def self.add_customer(options={})
-        #TODO: ADD IN endpoints
-        response = request_it!(self.xml_type, "nonpci", ADD_CUSTOMER_ACTION) do |xml|
+      def add_customer(options={})
+        self.create_request("nonpci", ADD_CUSTOMER_ACTION) do |xml|
      	    xml['px'].AddCustomer do
             xml['px'].DigitalKey DirectDebit::Ezidebit::api_digital_key
             options.each { |key,value| xml['px'].send(key, value)}
           end
         end
-    	  parse_add_customer_response(response)
+
+        response = self.request_it!
+    	  self.class.parse_add_customer_response(response)
       end
 
       #This method will add a new customer.
-      def self.edit_customer(options={})
-        response = request_it!(self.xml_type, "nonpci", EDIT_CUSTOMER_ACTION) do |xml|
+      def edit_customer(options={})
+        response = create_request("nonpci", EDIT_CUSTOMER_ACTION) do |xml|
           xml['px'].EditCustomerDetails do
             xml['px'].DigitalKey DirectDebit::Ezidebit::api_digital_key
             options.each { |key,value| xml['px'].send(key, value)}
           end
         end
-        parse_generic_status_response(response, 'EditCustomerDetails')
+        response = self.request_it!
+        self.class.parse_generic_status_response(response, 'EditCustomerDetails')
       end
 
       #This method retrieves details about the given Customer.
-      def self.get_customer_details(ezi_debit_customer_id = "", your_system_reference = "")
-        response = request_it!(self.xml_type, "nonpci", GET_INFO_ACTION) do |xml|
+      def get_customer_details(ezi_debit_customer_id = "", your_system_reference = "")
+        response = create_request("nonpci", GET_INFO_ACTION) do |xml|
           xml['px'].GetCustomerDetails do
             xml['px'].DigitalKey DirectDebit::Ezidebit::api_digital_key
             xml['px'].EziDebitCustomerID ezi_debit_customer_id
             xml['px'].YourSystemReference your_system_reference
           end
         end
-        parse_get_customer_details(response)
+        response = self.request_it!
+        self.class.parse_get_customer_details(response)
       end
     	 
       #This method will change the status of a customer.
-    	def self.change_customer_status(options={})
-        response = request_it!(self.xml_type, "nonpci", UPDATE_STATUS_ACTION) do |xml|
+    	def change_customer_status(options={})
+        response = create_request("nonpci", UPDATE_STATUS_ACTION) do |xml|
           xml['px'].ChangeCustomerStatus do
-            xml['px'].DigitalKey DirectDebit::api_digital_key
+            xml['px'].DigitalKey DirectDebit::Ezidebit::api_digital_key
             options.each { |key,value| xml['px'].send(key, value)}
           end
         end
-        parse_generic_status_response(response, 'ChangeCustomerStatus')
+        response = self.request_it!
+        self.class.parse_generic_status_response(response, 'ChangeCustomerStatus')
     	end
 
       #This method will either create a new bank account for a customer or update the bank account if already exists
       def self.edit_bank_account(options={})
-        response = request_it!(self.xml_type, "pci", EDIT_BANK_ACCOUNT_ACTION) do |xml|
+        response = create_request("pci", EDIT_BANK_ACCOUNT_ACTION) do |xml|
           xml['px'].EditCustomerBankAccount do
             xml['px'].DigitalKey DirectDebit::Ezidebit::api_digital_key
             options.each { |key,value| xml['px'].send(key, value)}
           end
         end
+        response = self.request_it!
         parse_generic_status_response(response, 'EditCustomerBankAccount')
       end
 
