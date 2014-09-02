@@ -93,7 +93,6 @@ eos
         to_return(:body => response_body, :status => 200, :headers => { 'Content-Length' => 3 })
 
     response = customer.edit_customer(customer_options)
-    puts "rsponse: #{response}"
     assert_equal({:Status=>"S", :Error=>"0", :ErrorMessage=>""}, response)
   end
 
@@ -204,8 +203,129 @@ eos
         to_return(:body => response_body, :status => 200, :headers => { 'Content-Length' => 3 })
 
     response = customer.change_customer_status(customer_options)
-    puts "rsponse: #{response}"
     assert_equal({:Status=>"S", :Error=>"0", :ErrorMessage=>""}, response)
+  end
+
+  def test_edit_bank_account
+    customer = DirectDebit::Ezidebit::Customer.new
+
+    customer_options = {
+        EziDebitCustomerID: "",
+        YourSystemReference: "240",
+        BankAccountName: "Joe Smith",
+        BankAccountBSB: "064001",
+        BankAccountNumber: "1234",
+        Reactivate: "YES",
+        Username: "WebServiceUser"
+    }
+
+    response_body=<<-eos
+<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
+    <s:Body>
+        <EditCustomerBankAccountResponse xmlns="https://px.ezidebit.com.au/">
+        <EditCustomerBankAccountResult xmlns:i="http://www.w3.org/2001/XMLSchema instance">
+        <Data>S</Data>
+        <Error>0</Error>
+        <ErrorMessage i:nil="true"/>
+        </EditCustomerBankAccountResult>
+        </EditCustomerBankAccountResponse>
+    </s:Body>
+</s:Envelope>
+eos
+    #TODO: stub the response here
+    stub_request(:post, "https://api.demo.ezidebit.com.au/v3-3/pci").
+        to_return(:body => response_body, :status => 200, :headers => { 'Content-Length' => 3 })
+
+    response = customer.edit_bank_account(customer_options)
+    assert_equal({:Status=>"S", :Error=>"0", :ErrorMessage=>""}, response)
+  end
+
+  def test_create_schedule
+    customer = DirectDebit::Ezidebit::Customer.new
+
+    customer_options = {
+        EziDebitCustomerID: "",
+        YourSystemReference: "18",
+        ScheduleStartDate: "2014-08-10",
+        SchedulePeriodType: "M",
+        DayOfWeek: "",
+        DayOfMonth: "1",
+        FirstWeekOfMonth: "",
+        SecondWeekOfMonth: "",
+        ThirdWeekOfMonth: "",
+        FouthWeekOfMonth: "",
+        PaymentAmountInCents: "2000",
+        LimitToNumberOfPayments: "12",
+        LimitToTotalAmountInCents: "0",
+        KeepManualPayments: "YES",
+        Username: "WebServiceUser"
+    }
+
+    response_body=<<-eos
+<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
+    <s:Body>
+        <CreateScheduleResponse xmlns="https://px.ezidebit.com.au/">
+        <CreateScheduleResult xmlns:i="http://www.w3.org/2001/XMLSchema instance">
+        <Data>S</Data>
+        <Error>0</Error>
+        <ErrorMessage i:nil="true"/>
+        </CreateScheduleResult>
+        </CreateScheduleResponse>
+    </s:Body>
+</s:Envelope>
+eos
+    #TODO: stub the response here
+    stub_request(:post, "https://api.demo.ezidebit.com.au/v3-3/nonpci").
+        to_return(:body => response_body, :status => 200, :headers => { 'Content-Length' => 3 })
+
+    response = customer.create_schedule(customer_options)
+    assert_equal({:Status=>"S", :Error=>"0", :ErrorMessage=>""}, response)
+  end
+
+  def test_add_bank_debit
+    customer = DirectDebit::Ezidebit::Customer.new
+
+    customer_options = {
+        YourSystemReference: "18",
+        YourGeneralReference: "",
+        NewYourSystemReference: "",
+        LastName: "Test Last Name",
+        FirstName: "Test First Name",
+        EmailAddress: "test241@myproperty.com",
+        MobilePhoneNumber: "0400123456",
+        PaymentReference: "1",
+        BankAccountName: "Joe Smith",
+        BankAccountBSB: "064001",
+        BankAccountNumber: "1234",
+        PaymentAmountInCents: "2000",
+        DebitDate: "2014-08-20",
+        msPaymentReminder: "NO",
+        SmsFailedNotification: "NO",
+        SmsExpiredCard: "NO",
+        Username: "WebServiceUser"
+    }
+
+    response_body=<<-eos
+<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
+    <s:Body>
+        <AddBankDebitResponse xmlns="https://px.ezidebit.com.au/">
+        <AddBankDebitResult xmlns:i="http://www.w3.org/2001/XMLSchema instance">
+        <Data xmlns:a="http://schemas.datacontract.org/2004/07/Ezidebit.PaymentExchange.V3_3.DataContracts">
+            <a:CustomerRef>123456</a:CustomerRef>
+        </Data>
+        <Error>0</Error>
+        <ErrorMessage i:nil="true"/>
+        </AddBankDebitResult>
+        </AddBankDebitResponse>
+    </s:Body>
+</s:Envelope>
+eos
+    #TODO: stub the response here
+    stub_request(:post, "https://api.demo.ezidebit.com.au/v3-3/pci").
+        to_return(:body => response_body, :status => 200, :headers => { 'Content-Length' => 3 })
+
+    response = customer.add_bank_debit(customer_options)
+    assert_equal({:CustomerRef=>"123456"}, response)
   end
 
 end

@@ -49,6 +49,20 @@ module DirectDebit
         parse_get_payments(response)
       end
 
+      def self.get_scheduled_payments(date_from = "", date_to = "", ezi_debit_customer_id = "", your_system_reference = "")
+          response = request_it!(self.xml_type, "nonpci", GET_SCHEDULED_PAYMENTS_ACTION) do |xml|
+            xml['px'].GetScheduledPayments do
+              xml['px'].DigitalKey DirectDebit::Ezidebit::api_digital_key
+              xml['px'].DateFrom date_from
+              xml['px'].DateTo date_to
+              xml['px'].EziDebitCustomerID ezi_debit_customer_id
+              xml['px'].YourSystemReference your_system_reference
+          end
+        end
+        parse_get_scheduled_payments(response)
+      end
+
+
       def self.parse_add_payment_response(response)
         if response then
           xml    = Nokogiri::XML(response.body)
@@ -76,6 +90,29 @@ module DirectDebit
             data[fieldname] = xml.xpath("//xmlns:GetPaymnetDetailsResponse/xmlns:GetPaymentDetailsResult/xmlns:Data/xmlns:#{fieldname}",  {xmlns: 'https://px.ezidebit.com.au/'} ).text
           end
           return data
+        else
+          false
+        end
+      end
+
+       def self.parse_get_scheduled_payments(response)
+        if response then
+          xml    = Nokogiri::XML(response.body)
+          payments = []
+          fieldnames = ['EziDebitCustomerID', 'YourSystemReference', 'YourGeneralReference', 'PaymentDate', 'PaymentAmount', 'PaymentReference',
+            'ManuallyAddedPayment']
+          payments_nodeset = xml.xpath("//xmlns:GetScheduledPaymentsResponse/xmlns:GetScheduledPaymentsResult/xmlns:Data/xmlns:ScheduledPayment",  
+            {xmlns: 'https://px.ezidebit.com.au/'} ).map { |node| node}
+          Ezidebit.logger.debug  "Payment nodeset count: #{payments_nodeset.count}"
+          payments_nodeset.each do |payment_node|
+            data = Hash.new
+            fieldnames.each do | fieldname|
+              data[fieldname] = payment_node.xpath("ns:#{fieldname}",  
+                {ns: 'https://px.ezidebit.com.au/'} ).text
+            end
+            payments << data
+          end
+          return payments
         else
           false
         end

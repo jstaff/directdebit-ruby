@@ -22,7 +22,7 @@ module DirectDebit
         end
 
         response = self.request_it!
-    	  self.class.parse_add_customer_response(response)
+    	  parse_add_customer_response(response)
       end
 
       #This method will add a new customer.
@@ -34,7 +34,7 @@ module DirectDebit
           end
         end
         response = self.request_it!
-        self.class.parse_generic_status_response(response, 'EditCustomerDetails')
+        parse_generic_status_response(response, 'EditCustomerDetails')
       end
 
       #This method retrieves details about the given Customer.
@@ -47,7 +47,7 @@ module DirectDebit
           end
         end
         response = self.request_it!
-        self.class.parse_get_customer_details(response)
+        parse_get_customer_details(response)
       end
     	 
       #This method will change the status of a customer.
@@ -59,11 +59,11 @@ module DirectDebit
           end
         end
         response = self.request_it!
-        self.class.parse_generic_status_response(response, 'ChangeCustomerStatus')
+        parse_generic_status_response(response, 'ChangeCustomerStatus')
     	end
 
       #This method will either create a new bank account for a customer or update the bank account if already exists
-      def self.edit_bank_account(options={})
+      def edit_bank_account(options={})
         response = create_request("pci", EDIT_BANK_ACCOUNT_ACTION) do |xml|
           xml['px'].EditCustomerBankAccount do
             xml['px'].DigitalKey DirectDebit::Ezidebit::api_digital_key
@@ -76,41 +76,30 @@ module DirectDebit
 
 
       #This method will either create payment schedule for a customer
-      def self.create_schedule(options={})
-          response = request_it!(self.xml_type, "nonpci", CREATE_SCHEDULE_ACTION) do |xml|
+      def create_schedule(options={})
+          response = create_request("nonpci", CREATE_SCHEDULE_ACTION) do |xml|
           xml['px'].CreateSchedule do
             xml['px'].DigitalKey DirectDebit::Ezidebit::api_digital_key
             options.each { |key,value| xml['px'].send(key, value)}
           end
         end
+        response = self.request_it!
         parse_generic_status_response(response, 'CreateSchedule')
       end
 
-      def self.get_scheduled_payments(date_from = "", date_to = "", ezi_debit_customer_id = "", your_system_reference = "")
-          response = request_it!(self.xml_type, "nonpci", GET_SCHEDULED_PAYMENTS_ACTION) do |xml|
-            xml['px'].GetScheduledPayments do
-              xml['px'].DigitalKey DirectDebit::Ezidebit::api_digital_key
-              xml['px'].DateFrom date_from
-              xml['px'].DateTo date_to
-              xml['px'].EziDebitCustomerID ezi_debit_customer_id
-              xml['px'].YourSystemReference your_system_reference
-          end
-        end
-        parse_get_scheduled_payments(response)
-      end
-
       #Add/Edit customer and payment
-      def self.add_bank_debit(options={})
-        response = request_it!("xmlsoap", "pci", ADD_BANK_DEBIT_ACTION) do |xml|
+      def add_bank_debit(options={})
+        response = create_request("pci", ADD_BANK_DEBIT_ACTION) do |xml|
             xml['px'].AddBankDebit do
             xml['px'].DigitalKey DirectDebit::Ezidebit::api_digital_key
             options.each { |key,value| xml['px'].send(key, value)}
           end
         end
+        response = self.request_it!
         parse_add_bank_debit_response(response)
       end
 
-      def self.parse_add_bank_debit_response(response)
+      def parse_add_bank_debit_response(response)
         if response then
           xml    = Nokogiri::XML(response.body)
           data   = {}
@@ -122,7 +111,7 @@ module DirectDebit
         end
       end    
 
-      def self.parse_add_customer_response(response)
+      def parse_add_customer_response(response)
         if response then
           xml    = Nokogiri::XML(response.body)
           data   = {}
@@ -134,7 +123,7 @@ module DirectDebit
         end
       end
 
-      def self.parse_get_customer_details(response)
+      def parse_get_customer_details(response)
         if response then
           xml    = Nokogiri::XML(response.body)
           data   = {}
@@ -153,7 +142,7 @@ module DirectDebit
         end
       end
 
-      def self.parse_generic_status_response(response, method_name)
+      def parse_generic_status_response(response, method_name)
         if response then
           xml    = Nokogiri::XML(response.body)
           data   = {}
@@ -169,28 +158,7 @@ module DirectDebit
         end 
       end
 
-       def self.parse_get_scheduled_payments(response)
-        if response then
-          xml    = Nokogiri::XML(response.body)
-          payments = []
-          fieldnames = ['EziDebitCustomerID', 'YourSystemReference', 'YourGeneralReference', 'PaymentDate', 'PaymentAmount', 'PaymentReference',
-            'ManuallyAddedPayment']
-          payments_nodeset = xml.xpath("//xmlns:GetScheduledPaymentsResponse/xmlns:GetScheduledPaymentsResult/xmlns:Data/xmlns:ScheduledPayment",  
-            {xmlns: 'https://px.ezidebit.com.au/'} ).map { |node| node}
-          Ezidebit.logger.debug  "Payment nodeset count: #{payments_nodeset.count}"
-          payments_nodeset.each do |payment_node|
-            data = Hash.new
-            fieldnames.each do | fieldname|
-              data[fieldname] = payment_node.xpath("ns:#{fieldname}",  
-                {ns: 'https://px.ezidebit.com.au/'} ).text
-            end
-            payments << data
-          end
-          return payments
-        else
-          false
-        end
-      end
+      
 
     end
   end
