@@ -82,7 +82,7 @@ module DirectDebit
             options.each { |key,value| xml['px'].send(key, value)}
           end
         end
-        response = self.request_it!
+        response = request_it!
         parse(response, "generic_status_response", 'CreateSchedule')
       end
 
