@@ -1,7 +1,8 @@
 module DirectDebit
   class ApiObject
 
-    attr_reader :end_point, :request
+    attr_accessor :request
+    attr_reader :end_point
 
     @@last_request = ""
     @@last_response = ""
@@ -53,7 +54,7 @@ module DirectDebit
       self.end_point = end_point
       DirectDebit.logger.debug "XML Message: #{data.to_xml}"
       DirectDebit.logger.debug "End Point: #{self.end_point}"
-      @request = Typhoeus::Request.new(self.end_point,
+      self.request = Typhoeus::Request.new(self.end_point,
         :method  => :post,
         :body    => data.to_xml,
         :headers => {'Content-Type' => "text/xml;charset=UTF-8", 'SOAPAction' => soap_action})

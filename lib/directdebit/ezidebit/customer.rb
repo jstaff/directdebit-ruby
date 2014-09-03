@@ -14,70 +14,70 @@ module DirectDebit
 
     	#This method will add a new customer.
       def add_customer(options={})
-        self.create_request("nonpci", ADD_CUSTOMER_ACTION) do |xml|
+        create_request("nonpci", ADD_CUSTOMER_ACTION) do |xml|
      	    xml['px'].AddCustomer do
             xml['px'].DigitalKey DirectDebit::Ezidebit::api_digital_key
             options.each { |key,value| xml['px'].send(key, value)}
           end
         end
-        response = self.request_it!
+        response = request_it!
         parse(response, "add_customer_response")
       end
 
       #This method will add a new customer.
       def edit_customer(options={})
-        response = create_request("nonpci", EDIT_CUSTOMER_ACTION) do |xml|
+        create_request("nonpci", EDIT_CUSTOMER_ACTION) do |xml|
           xml['px'].EditCustomerDetails do
             xml['px'].DigitalKey DirectDebit::Ezidebit::api_digital_key
             options.each { |key,value| xml['px'].send(key, value)}
           end
         end
-        response = self.request_it!
+        response = request_it!
         parse(response, "generic_status_response", 'EditCustomerDetails')
       end
 
       #This method retrieves details about the given Customer.
       def get_customer_details(ezi_debit_customer_id = "", your_system_reference = "")
-        response = create_request("nonpci", GET_INFO_ACTION) do |xml|
+        create_request("nonpci", GET_INFO_ACTION) do |xml|
           xml['px'].GetCustomerDetails do
             xml['px'].DigitalKey DirectDebit::Ezidebit::api_digital_key
             xml['px'].EziDebitCustomerID ezi_debit_customer_id
             xml['px'].YourSystemReference your_system_reference
           end
         end
-        response = self.request_it!
+        response = request_it!
         parse(response, "get_customer_details")
       end
     	 
       #This method will change the status of a customer.
     	def change_customer_status(options={})
-        response = create_request("nonpci", UPDATE_STATUS_ACTION) do |xml|
+        create_request("nonpci", UPDATE_STATUS_ACTION) do |xml|
           xml['px'].ChangeCustomerStatus do
             xml['px'].DigitalKey DirectDebit::Ezidebit::api_digital_key
             options.each { |key,value| xml['px'].send(key, value)}
           end
         end
-        response = self.request_it!
+        response = request_it!
         parse(response, "generic_status_response", 'ChangeCustomerStatus')
     	end
 
       #This method will either create a new bank account for a customer or update the bank account if already exists
       def edit_bank_account(options={})
-        response = create_request("pci", EDIT_BANK_ACCOUNT_ACTION) do |xml|
+        create_request("pci", EDIT_BANK_ACCOUNT_ACTION) do |xml|
           xml['px'].EditCustomerBankAccount do
             xml['px'].DigitalKey DirectDebit::Ezidebit::api_digital_key
             options.each { |key,value| xml['px'].send(key, value)}
           end
         end
-        response = self.request_it!
+        response = request_it!
         parse(response, "generic_status_response", 'EditCustomerBankAccount')
       end
 
 
       #This method will either create payment schedule for a customer
       def create_schedule(options={})
-          response = create_request("nonpci", CREATE_SCHEDULE_ACTION) do |xml|
-          xml['px'].CreateSchedule do
+        create_request("nonpci", CREATE_SCHEDULE_ACTION) do |xml|
+        xml['px'].CreateSchedule do
             xml['px'].DigitalKey DirectDebit::Ezidebit::api_digital_key
             options.each { |key,value| xml['px'].send(key, value)}
           end
@@ -88,13 +88,13 @@ module DirectDebit
 
       #Add/Edit customer and payment
       def add_bank_debit(options={})
-        response = create_request("pci", ADD_BANK_DEBIT_ACTION) do |xml|
+        create_request("pci", ADD_BANK_DEBIT_ACTION) do |xml|
             xml['px'].AddBankDebit do
             xml['px'].DigitalKey DirectDebit::Ezidebit::api_digital_key
             options.each { |key,value| xml['px'].send(key, value)}
           end
         end
-        response = self.request_it!
+        response = request_it!
         parse(response, "add_bank_debit_response")
       end
 
