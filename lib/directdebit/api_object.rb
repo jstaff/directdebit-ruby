@@ -34,9 +34,7 @@ module DirectDebit
       if type == "soap"
         return construct_soap_envelope(&block)
       else
-        Nokogiri::XML::Builder.new do |xml|
-               xml.Body(&block)
-        end
+        Nokogiri::XML::Builder.new &block
       end
     end
 
@@ -52,6 +50,7 @@ module DirectDebit
     def create_request(end_point = "", soap_action = "", &block)
       data = self.class.construct_xml(self.class.xml_type, &block)
       self.end_point = end_point
+       DirectDebit.logger.debug "###############################################"
       DirectDebit.logger.debug "XML Message: #{data.to_xml}"
       DirectDebit.logger.debug "End Point: #{self.end_point}"
       self.request = Typhoeus::Request.new(self.end_point,

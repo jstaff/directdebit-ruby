@@ -9,32 +9,34 @@ module DirectDebit
 
 
       #This method is used to add a single payment to a customer's account
-      def self.add_payment(options={})
-        response = request_it!(self.xml_type, "nonpci", ADD_PAYMENT_ACTION) do |xml|
+      def add_payment(options={})
+        create_request("nonpci", ADD_PAYMENT_ACTION) do |xml|
           xml['px'].AddPayment do
-            xml['px'].DigitalKey DirectDebit::api_digital_key
+            xml['px'].DigitalKey DirectDebit::Ezidebit::api_digital_key
             options.each { |key,value| xml['px'].send(key, value)}
           end
         end
-        parse_add_payment_response(response)
+        response = request_it!
+        parse(response, "add_payment_response")
       end
 
       #This method will get payment details
-      def self.get_payment_detail(payment_reference = "")
-        response = request_it!(self.xml_type, "nonpci", PAYMENT_DETAIL_ACTION) do |xml|
+      def get_payment_detail(payment_reference = "")
+        create_request("nonpci", PAYMENT_DETAIL_ACTION) do |xml|
           xml['px'].GetPaymentDetail do
-            xml['px'].DigitalKey DirectDebit::api_digital_key
+            xml['px'].DigitalKey DirectDebit::Ezidebit::api_digital_key
             xml['px'].PaymentReference payment_reference
           end
         end
-        parse_get_payment_detail(response)
+        response = request_it!
+        parse(response, "get_payment_detail")
       end
 
-      def self.get_payments(date_from = "", date_to = "", date_field = "SETTLEMENT", 
+      def get_payments(date_from = "", date_to = "", date_field = "SETTLEMENT", 
           payment_type = "ALL", payment_method = "DR", payment_source = "SCHEDULED" )
-          response = request_it!(self.xml_type, "nonpci", GET_PAYMENTS_ACTION) do |xml|
+          create_request("nonpci", GET_PAYMENTS_ACTION) do |xml|
             xml['px'].GetPayments do
-              xml['px'].DigitalKey DirectDebit::api_digital_key
+              xml['px'].DigitalKey DirectDebit::Ezidebit::api_digital_key
               xml['px'].PaymentType payment_type
               xml['px'].PaymentMethod payment_method
               xml['px'].PaymentSource payment_source
@@ -46,11 +48,12 @@ module DirectDebit
               xml['px'].YourSystemReference ""
           end
         end
-        parse_get_payments(response)
+        response = request_it!
+        parse(response, "get_payments")
       end
 
       def self.get_scheduled_payments(date_from = "", date_to = "", ezi_debit_customer_id = "", your_system_reference = "")
-          response = request_it!(self.xml_type, "nonpci", GET_SCHEDULED_PAYMENTS_ACTION) do |xml|
+          create_request(self.xml_type, "nonpci", GET_SCHEDULED_PAYMENTS_ACTION) do |xml|
             xml['px'].GetScheduledPayments do
               xml['px'].DigitalKey DirectDebit::Ezidebit::api_digital_key
               xml['px'].DateFrom date_from
@@ -59,45 +62,47 @@ module DirectDebit
               xml['px'].YourSystemReference your_system_reference
           end
         end
+        response = request_it!
         parse_get_scheduled_payments(response)
       end
 
-
-      def self.parse_add_payment_response(response)
-        if response then
-          xml    = Nokogiri::XML(response.body)
-          data   = {}
-           data[:Status] = xml.xpath("//ns:AddPaymentResponse/ns:AddPaymentResult/ns:Data", 
-            {ns: 'https://px.ezidebit.com.au/'} ).text
-          data[:Error] = xml.xpath("//ns:AddPaymentResponse/ns:AddPaymentResult/ns:Error", 
-            {ns: 'https://px.ezidebit.com.au/'} ).text
-          data[:ErrorMessage] = xml.xpath("//ns:AddPaymentResponse/ns:AddPaymentResult/ns:ErrorMessage", 
-            {ns: 'https://px.ezidebit.com.au/'} ).text
-          return data
-        else
-          false
-        end
-      end
-
-      def self.parse_get_payment_detail(response)
-        if response then
-          xml    = Nokogiri::XML(response.body)
-          data   = {}
-          fieldnames = ['BankFailedReason', 'BankReturnCode', 'DebitDate', 'InvoiceID', 'PaymentAmount', 'PaymentI',
-            'PaymentMethod', 'PaymentReference', 'PaymentStatus', 'SettlementDate', 'ScheduledAmount', 'TransactionFeeClient', 'TransactionFeeCustomer', 
-            'TransactionFeeCustomer', 'YourSystemReference']
-          fieldnames.each do | fieldname|
-            data[fieldname] = xml.xpath("//xmlns:GetPaymnetDetailsResponse/xmlns:GetPaymentDetailsResult/xmlns:Data/xmlns:#{fieldname}",  {xmlns: 'https://px.ezidebit.com.au/'} ).text
+      def parse(response, type, generic_tag = nil)
+        if response
+          xml = Nokogiri::XML(response.body)
+          if(generic_tag == nil)
+            return self.send("parse_#{type}", xml)
+          else
+            return self.send("parse_#{type}", xml, generic_tag)
           end
-          return data
         else
-          false
+         return false
         end
       end
 
-       def self.parse_get_scheduled_payments(response)
-        if response then
-          xml    = Nokogiri::XML(response.body)
+
+      def parse_add_payment_response(xml)
+        data   = {}
+         data[:Status] = xml.xpath("//ns:AddPaymentResponse/ns:AddPaymentResult/ns:Data", 
+          {ns: 'https://px.ezidebit.com.au/'} ).text
+        data[:Error] = xml.xpath("//ns:AddPaymentResponse/ns:AddPaymentResult/ns:Error", 
+          {ns: 'https://px.ezidebit.com.au/'} ).text
+        data[:ErrorMessage] = xml.xpath("//ns:AddPaymentResponse/ns:AddPaymentResult/ns:ErrorMessage", 
+          {ns: 'https://px.ezidebit.com.au/'} ).text
+        data
+      end
+
+      def parse_get_payment_detail(xml)
+        data   = {}
+        fieldnames = ['BankFailedReason', 'BankReturnCode', 'DebitDate', 'InvoiceID', 'PaymentAmount', 'PaymentI',
+          'PaymentMethod', 'PaymentReference', 'PaymentStatus', 'SettlementDate', 'ScheduledAmount', 'TransactionFeeClient', 'TransactionFeeCustomer', 
+          'TransactionFeeCustomer', 'YourSystemReference']
+        fieldnames.each do | fieldname|
+          data[fieldname] = xml.xpath("//xmlns:GetPaymentDetailsResponse/xmlns:GetPaymentDetailsResult/xmlns:Data/xmlns:#{fieldname}",  {xmlns: 'https://px.ezidebit.com.au/'} ).text
+        end
+        data
+      end
+
+       def self.parse_get_scheduled_payments(xml)
           payments = []
           fieldnames = ['EziDebitCustomerID', 'YourSystemReference', 'YourGeneralReference', 'PaymentDate', 'PaymentAmount', 'PaymentReference',
             'ManuallyAddedPayment']
@@ -112,14 +117,10 @@ module DirectDebit
             end
             payments << data
           end
-          return payments
-        else
-          false
-        end
+          payments
       end
 
-      def self.parse_get_payments(response)
-        if response then
+      def parse_get_payments(xml)
           test_body=<<-eos
   <s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
    <s:Body>
@@ -200,14 +201,12 @@ module DirectDebit
   </s:Body>
   </s:Envelope>
   eos
-          xml    = Nokogiri::XML(test_body)
           payments = []
           fieldnames = ['BankFailedReason', 'BankReceiptID', 'BankReturnCode', 'CustomerName', 'DebitDate', 'EziDebitCustomerID',
             'InvoiceID', 'PaymentAmount', 'PaymentID', 'PaymentMethod', 'PaymentReference', 'PaymentSource', 'PaymentStatus', 'SettlementDate',
             'ScheduledAmount', 'TransactionFeeClient', 'TransactionFeeCustomer', 'TransactionTime', 'YourGeneralReference', 'YourSystemReference']
           payments_nodeset = xml.xpath("//xmlns:GetPaymentsResponse/xmlns:GetPaymentsResult/xmlns:Data/xmlns:Payment",  
             {xmlns: 'https://px.ezidebit.com.au/'} ).map { |node| node}
-          Ezidebit.logger.debug  "Payment nodeset count: #{payments_nodeset.count}"
           payments_nodeset.each do |payment_node|
             data = Hash.new
             fieldnames.each do | fieldname|
@@ -216,10 +215,8 @@ module DirectDebit
             end
             payments << data
           end
-          return payments
-        else
-          false
-        end
+          payments
+
       end
 
     end
