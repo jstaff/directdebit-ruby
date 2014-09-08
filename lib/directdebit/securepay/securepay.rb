@@ -1,6 +1,6 @@
 module DirectDebit
   module Securepay
-    @api_base = 'https://api.ezidebit.com.au/'
+    @api_base = 'https://test.securepay.com.au/xmlapi/payment/'
     @api_version = 'v3-3'
     @api_merchant_id = ''
     @api_merchant_passwd = ''

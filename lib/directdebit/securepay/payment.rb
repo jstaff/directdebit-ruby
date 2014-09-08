@@ -36,14 +36,14 @@ module DirectDebit
           end
         end
         response = request_it!
-        parse(response, "add_payment_response")
+        parse(response, "add_one_time_payment_response")
       end
 
       def add_periodic_payment(options={})
         create_request do |xml|
           xml.SecurePayMessage do
             add_message_merchant_info(xml)
-            xml.RequestType "Peridoc"
+            xml.RequestType "Periodic"
             xml.Periodic do
               xml.PeriodicList(:count => 1) do
                 add_xml_perodic_item(xml, "add" ,"debit", options)
@@ -52,7 +52,7 @@ module DirectDebit
           end
         end
         response = request_it!
-        parse(response, "add_payment_response")
+        parse(response, "add_periodic_payment_response")
       end
 
       def add_message_merchant_info(xml)
@@ -131,16 +131,20 @@ module DirectDebit
         end
       end
 
-
-      def parse_add_payment_response(xml)
+      def parse_add_one_time_payment_response(xml)
         data   = {}
-         data[:Status] = xml.xpath("//ns:AddPaymentResponse/ns:AddPaymentResult/ns:Data", 
-          {ns: 'https://px.ezidebit.com.au/'} ).text
-        data[:Error] = xml.xpath("//ns:AddPaymentResponse/ns:AddPaymentResult/ns:Error", 
-          {ns: 'https://px.ezidebit.com.au/'} ).text
-        data[:ErrorMessage] = xml.xpath("//ns:AddPaymentResponse/ns:AddPaymentResult/ns:ErrorMessage", 
-          {ns: 'https://px.ezidebit.com.au/'} ).text
-        data
+        data[:statusCode] = xml.xpath("SecurePayMessage/Status/statusCode").text
+        data[:statusDescription] = xml.xpath("SecurePayMessage/Status/statusDescription").text
+        return data
+      end
+
+      def parse_add_periodic_payment_response(xml)
+        data   = {}
+        data[:statusCode] = xml.xpath("SecurePayMessage/Status/statusCode").text
+        data[:statusDescription] = xml.xpath("SecurePayMessage/Status/statusDescription").text
+        data[:responseCode] = xml.xpath("SecurePayMessage/Periodic/PeriodicList/PeriodicItem/responseCode").text
+        data[:responseText] = xml.xpath("SecurePayMessage/Periodic/PeriodicList/PeriodicItem/responseText").text
+        return data
       end
     end   
   end

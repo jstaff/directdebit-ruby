@@ -53,7 +53,7 @@ module DirectDebit
       DirectDebit.logger.debug "###############################################"
       DirectDebit.logger.debug "XML Message: #{data.to_xml}"
       DirectDebit.logger.debug "End Point: #{self.end_point}"
-      self.request = Typhoeus::Request.new(self.end_point,
+      request = self.request = Typhoeus::Request.new(self.end_point,
         :method  => :post,
         :body    => data.to_xml,
         :headers => {'Content-Type' => "text/xml;charset=UTF-8", 'SOAPAction' => soap_action})
@@ -79,19 +79,20 @@ module DirectDebit
       xml.remove_namespaces!
 
       if xml.xpath("//Error").text.to_i > 0 
-        handle_error(response)
+        handle_error(response, '//ErrorMessage')
       elsif xml.xpath("//Fault").any? 
-        handle_fault(response)
+        handle_fault(response, '//faultstring')
+      elsif xml.xpath('//responseCode').text.to_i > 0
+        handle_error(response, '//responseText')
       else
         return response
       end
     end
 
     # Parses a Error and raises it as a DirectDebit::SoapError
-    def self.handle_error(response)
+    def self.handle_error(response, xpath)
       xml   = Nokogiri::XML(response.body)
       xml.remove_namespaces!
-      xpath = '//ErrorMessage'
       msg   = xml.xpath(xpath).text
 
       # TODO: Capture any app-specific exception messages here.
@@ -101,10 +102,9 @@ module DirectDebit
     end
 
      # Parses a Fault error and raises it as a DirectDebit::SoapError
-    def self.handle_fault(response)
+    def self.handle_fault(response, xpath)
       xml   = Nokogiri::XML(response.body)
       xml.remove_namespaces!
-      xpath = '//faultstring'
       msg   = xml.xpath(xpath).text
 
       raise DirectDebit::SoapError.new("Fault from server: #{msg}", @@last_request, @@last_response)

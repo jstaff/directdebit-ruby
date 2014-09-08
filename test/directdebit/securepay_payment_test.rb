@@ -3,10 +3,10 @@ require File.expand_path('../../test_helper', __FILE__)
 class CustomerTest < Minitest::Unit::TestCase
 
   DirectDebit.logger.level = Logger::DEBUG
-  DirectDebit::Securepay.api_base="https://test.securepay.com.au/xmlapi/directentry/"
+  DirectDebit::Securepay.api_base="https://test.securepay.com.au/xmlapi/directentry"
   DirectDebit::Securepay.api_version="spxml-4.2"
   DirectDebit::Securepay.api_merchant_id='ABC0001'
-  DirectDebit::Securepay.api_merchant_passwd='changit!'
+  DirectDebit::Securepay.api_merchant_passwd='abc123'
 
   def test_add_one_time_payment_for_debit
     payment = DirectDebit::Securepay::Payment.new
@@ -14,34 +14,117 @@ class CustomerTest < Minitest::Unit::TestCase
     payment_options = {
        amount: "123",
        purchaseOrderNo: "INV-123",
-       bsbNumber: "1234",
-       accountNumber:  "56789",
+       bsbNumber: "123123A",
+       accountNumber:  "1234",
        accountName: "John Smith",
-       creditFlag: "No"
+       creditFlag: "yes"
     }
 
     response_body=<<-eos
-<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
-    <s:Body>
-        <AddPaymentResponse xmlns="https://px.securepay.com.au/">
-        <AddPaymentResult xmlns:i="http://www.w3.org/2001/XMLSchema instance">
-            <Data>S</Data>
-            <Error>0</Error>
-            <ErrorMessage i:nil="true"/>
-        </AddPaymentResult>
-        </AddPaymentResponse>
-    </s:Body>
-</s:Envelope>
+<?xml version="1.0" encoding="UTF-8"?>
+<SecurePayMessage>
+    <MessageInfo>
+        <messageID>8af793f9af34bea0cf40f5fb750f64</messageID>
+        <messageTimestamp>20042303111226938000+660</messageTimestamp>
+        <apiVersion>xml-4.2</apiVersion>
+    </MessageInfo>
+    <MerchantInfo>
+        <merchantID>ABC0001</merchantID>
+    </MerchantInfo>
+    <RequestType>Payment</RequestType>
+    <Status>
+        <statusCode>000</statusCode>
+        <statusDescription>Normal</statusDescription>
+    </Status>
+    <Payment>
+        <TxnList count="1">
+             <Txn ID="1">
+             <txnType>15</txnType>
+             <txnSource>23</txnSource>
+             <amount>200</amount>
+             <purchaseOrderNo>test</purchaseOrderNo>
+             <approved>Yes</approved>
+             <responseCode>00</responseCode>
+             <responseText>Transaction Accepted</responseText>
+             <settlementDate>20040323</settlementDate>
+             <txnID>009887</txnID>
+             <DirectEntryInfo> 
+                 <bsbNumber>123123</bsbNumber> 
+                 <accountNumber>0012345</accountNumber>
+                 <accountName>John Citizen</accountName>
+             </DirectEntryInfo> 
+             </Txn>
+        </TxnList>
+    </Payment>
+</SecurePayMessage>
 eos
     #TODO: stub the response here
-    stub_request(:post, "https://test.securepay.com.au/xmlapi/directentry/").
+    stub_request(:post, "https://test.securepay.com.au/xmlapi/directentry").
         to_return(:body => response_body, :status => 200, :headers => { 'Content-Length' => 3 })
 
 
     response = payment.add_one_time_payment('debit', payment_options)
     puts "#######################"
     puts "response #{response}"
-    assert_equal({:Status=>"S", :Error=>"0", :ErrorMessage=>""}, response)
+    assert_equal({:statusCode=>"000", :statusDescription=>"Normal"}, response)
+  end
+
+  def test_add_one_time_payment_for_debit_error
+    payment = DirectDebit::Securepay::Payment.new
+
+    payment_options = {
+       amount: "123",
+       purchaseOrderNo: "INV-123",
+       bsbNumber: "123123A",
+       accountNumber:  "1234A",
+       accountName: "John Smith",
+       creditFlag: "yes"
+    }
+
+    response_body=<<-eos
+<?xml version="1.0" encoding="UTF-8"?>
+<SecurePayMessage>
+    <MessageInfo>
+        <messageID>8af793f9af34bea0cf40f5fb750f64</messageID>
+        <messageTimestamp>20042303111226938000+660</messageTimestamp>
+        <apiVersion>xml-4.2</apiVersion>
+    </MessageInfo>
+    <MerchantInfo>
+        <merchantID>ABC0001</merchantID>
+    </MerchantInfo>
+    <RequestType>Payment</RequestType>
+    <Status>
+        <statusCode>000</statusCode>
+        <statusDescription>Normal</statusDescription>
+    </Status>
+    <Payment>
+        <TxnList count="1">
+             <Txn ID="1">
+             <txnType>0</txnType>
+             <txnSource>0</txnSource>
+             <amount/>
+             <purchaseOrderNo/>
+             <settlementDate/>
+             <DirectEntryInfo> 
+                 <bsbNumber/>
+                 <accountNumber/>
+                 <accountName/>
+             </DirectEntryInfo>
+             <approved>No</approved>
+             <responseCode>202</responseCode>
+             <responseText>Invalid BSB number</responseText>
+             </Txn>
+        </TxnList>
+    </Payment>
+</SecurePayMessage>
+eos
+    #TODO: stub the response here
+    stub_request(:post, "https://test.securepay.com.au/xmlapi/directentry").
+        to_return(:body => response_body, :status => 200, :headers => { 'Content-Length' => 3 })
+ 
+    assert_raises DirectDebit::SoapError do 
+        payment.add_one_time_payment('debit', payment_options)
+    end
   end
 
   def test_add_periodic_payment
@@ -59,27 +142,60 @@ eos
     }
 
     response_body=<<-eos
-<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
-    <s:Body>
-        <AddPaymentResponse xmlns="https://px.securepay.com.au/">
-        <AddPaymentResult xmlns:i="http://www.w3.org/2001/XMLSchema instance">
-            <Data>S</Data>
-            <Error>0</Error>
-            <ErrorMessage i:nil="true"/>
-        </AddPaymentResult>
-        </AddPaymentResponse>
-    </s:Body>
-</s:Envelope>
+<?xml version="1.0" encoding="UTF-8"?>
+<SecurePayMessage>
+    <MessageInfo>
+        <messageID>8af793f9af34bea0cf40f5fb750f64</messageID>
+        <messageTimestamp>20042303111226938000+660</messageTimestamp>
+        <apiVersion>xml-4.2</apiVersion>
+    </MessageInfo>
+    <MerchantInfo>
+        <merchantID>ABC0001</merchantID>
+    </MerchantInfo>
+    <RequestType>Payment</RequestType>
+    <Status>
+        <statusCode>0</statusCode>
+        <statusDescription>Normal</statusDescription>
+    </Status>
+    <Periodic>
+        <PeriodicList count="1">
+             <PeriodicItem ID="1">
+                 <actionType>add</actionType>
+                 <clientID>test</clientID>
+                 <responseCode>00</responseCode>
+                 <responseText>Successful</responseText>
+                 <successful>yes</successful>
+                 <DirectEntryInfo>
+                    <bsbNumber>1234</bsbNumber>
+                    <accountNumber>56789</accountNumber>
+                    <accountName>John Smith</accountName>
+                 <creditFlag>No</creditFlag>
+                 </DirectEntryInfo>
+                 <amount>123</amount>
+                 <currency>AUD</currency>
+                 <periodicType>1</periodicType>
+                 <paymentInterval/>
+                 <numberOfPayments/>
+                 <startDate>20041101</startDate>
+                 <endDate>20041101</endDate>
+            </PeriodicItem>
+        </PeriodicList>
+    </Periodic>
+</SecurePayMessage>
 eos
     #TODO: stub the response here
-    stub_request(:post, "https://test.securepay.com.au/xmlapi/directentry/").
+    stub_request(:post, "https://test.securepay.com.au/xmlapi/directentry").
         to_return(:body => response_body, :status => 200, :headers => { 'Content-Length' => 3 })
 
 
     response = payment.add_periodic_payment(payment_options)
     puts "#######################"
     puts "response #{response}"
-    assert_equal({:Status=>"S", :Error=>"0", :ErrorMessage=>""}, response)
+    assert_equal(
+        {:statusCode => "0", 
+        :statusDescription => "Normal", 
+        :responseCode => "00",
+        :responseText => "Successful"}, response)
   end
 
 end
