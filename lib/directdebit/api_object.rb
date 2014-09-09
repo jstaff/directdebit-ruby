@@ -82,6 +82,8 @@ module DirectDebit
         handle_error(response, '//ErrorMessage')
       elsif xml.xpath("//Fault").any? 
         handle_fault(response, '//faultstring')
+      elsif xml.xpath('//statusCode').text.to_i > 0
+        handle_error(response, '//statusDescription')
       elsif xml.xpath('//responseCode').text.to_i > 0
         handle_error(response, '//responseText')
       else

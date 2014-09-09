@@ -19,10 +19,17 @@ module DirectDebit
         20 => "IVR Payment"
       }
 
+      PERIODIC_TYPES = {
+        1 => "Once Off",
+        2 => "Day Based",
+        3 => "Calendar Based",
+        4 => "Triggered"
+      }
+
       DEFAULT_TRANSACTION_SOURCE = 23 #FROM XML
 
       def add_one_time_payment(payment_type='debit', options={})
-        create_request do |xml|
+        create_request('directentry') do |xml|
           xml.SecurePayMessage do
             add_message_merchant_info(xml)
             xml.RequestType "Payment"
@@ -40,15 +47,15 @@ module DirectDebit
       end
 
       def add_periodic_payment(options={})
-        create_request do |xml|
+        create_request('periodic') do |xml|
           xml.SecurePayMessage do
             add_message_merchant_info(xml)
             xml.RequestType "Periodic"
-            xml.Periodic do
-              xml.PeriodicList(:count => 1) do
-                add_xml_perodic_item(xml, "add" ,"debit", options)
+              xml.Periodic do
+                xml.PeriodicList(:count => 1) do
+                  add_xml_perodic_item(xml, "Day Based", "add" ,"debit", options)
+                end
               end
-            end
           end
         end
         response = request_it!
@@ -60,7 +67,7 @@ module DirectDebit
          add_xml_merchant_info(xml)
       end
 
-      def add_xml_transaction_item(xml, txn_type="", options={})
+      def add_xml_transaction_item(xml, txn_type="0", options={})
         xml.Txn do
           xml.txnType txn_type
           xml.txnSource DEFAULT_TRANSACTION_SOURCE
@@ -71,23 +78,39 @@ module DirectDebit
         end
       end
 
-      def add_xml_perodic_item(xml, action_type="", payment_type="", options={})
+      def add_xml_perodic_item(xml, type="Once Off", action_type="add", payment_type="debit", options={})
         xml.PeriodicItem(:ID => 1) do
           xml.actionType "add" if action_type == "add"
           xml.actionType "delete" if action_type == "delete"
           xml.actionType "trigger" if action_type == "trigger"
           xml.clientID options[:clientID]
-          xml.amount options[:amount]
-          xml.startDate options[:startDate]
-          xml.numberOfPayments options[:numberOfPayments]
           add_xml_credit_card_info(xml, options) if payment_type == "credit"
           add_xml_direct_entry_info(xml, options) if payment_type == "debit"     
+          xml.amount options[:amount]
+          case type
+          when "Day Based"
+            xml.periodicType PERIODIC_TYPES.key('Day Based')
+            xml.startDate options[:startDate]
+            xml.paymentInterval options[:paymentInterval]
+            xml.numberOfPayments options[:numberOfPayments]
+          when "Calendar Based"
+            xml.periodicType PERIODIC_TYPES.key('Calendar Based')
+            xml.startDate options[:startDate]
+            xml.paymentInterval options[:paymentInterval]
+            xml.numberOfPayments options[:numberOfPayments]
+          when "Triggered"
+            xml.periodicType PERIODIC_TYPES.key('Day Based Periodic Payment')
+          else 
+            xml.periodicType PERIODIC_TYPES.key('Once Off')
+            xml.startDate options[:startDate]
+          end
+
         end
       end
 
       def add_xml_message_info(xml)
         xml.MessageInfo do
-          xml.messageId "#{rand(10000)}#{(Time.now.to_f * 1000).to_i}"
+          xml.messageID "#{rand(10000)}#{(Time.now.to_f * 1000).to_i}"
           xml.messageTimestamp Time.now.strftime("%Y%d%m%H%M%S%L000s010")
           xml.apiVersion DirectDebit::Securepay.api_version
           xml.timeoutValue DirectDebit::Securepay::api_timeout

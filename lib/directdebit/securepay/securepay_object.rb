@@ -7,7 +7,7 @@ module DirectDebit
       end
 
       def self.api_url(url='')       
-          DirectDebit::Securepay.api_base
+          DirectDebit::Securepay.api_base + "/" + url
       end
     
     end

@@ -3,7 +3,7 @@ require File.expand_path('../../test_helper', __FILE__)
 class CustomerTest < Minitest::Unit::TestCase
 
   DirectDebit.logger.level = Logger::DEBUG
-  DirectDebit::Securepay.api_base="https://test.securepay.com.au/xmlapi/directentry"
+  DirectDebit::Securepay.api_base="https://test.securepay.com.au/xmlapi"
   DirectDebit::Securepay.api_version="spxml-4.2"
   DirectDebit::Securepay.api_merchant_id='ABC0001'
   DirectDebit::Securepay.api_merchant_passwd='abc123'
@@ -13,8 +13,8 @@ class CustomerTest < Minitest::Unit::TestCase
 
     payment_options = {
        amount: "123",
-       purchaseOrderNo: "INV-123",
-       bsbNumber: "123123A",
+       purchaseOrderNo: "INV-1234",
+       bsbNumber: "123123",
        accountNumber:  "1234",
        accountName: "John Smith",
        creditFlag: "yes"
@@ -69,14 +69,43 @@ eos
     assert_equal({:statusCode=>"000", :statusDescription=>"Normal"}, response)
   end
 
-  def test_add_one_time_payment_for_debit_error
+ def test_status_error
+    payment = DirectDebit::Securepay::Payment.new
+
+    payment_options = {
+       amount: "123",
+       purchaseOrderNo: "INV-123",
+       accountNumber:  "1234",
+       accountName: "John Smith",
+       creditFlag: "yes"
+    }
+
+    response_body=<<-eos
+<SecurePayMessage>
+    <Status>
+        <statusCode>516</statusCode>
+        <statusDescription>Request type unavailable</statusDescription>
+    </Status>
+</SecurePayMessage>
+eos
+
+    stub_request(:post, "https://test.securepay.com.au/xmlapi/directentry").
+        to_return(:body => response_body, :status => 200, :headers => { 'Content-Length' => 3 })
+ 
+    assert_raises DirectDebit::SoapError do 
+        payment.add_one_time_payment('debit', payment_options)
+    end
+
+end
+
+  def test_response_error
     payment = DirectDebit::Securepay::Payment.new
 
     payment_options = {
        amount: "123",
        purchaseOrderNo: "INV-123",
        bsbNumber: "123123A",
-       accountNumber:  "1234A",
+       accountNumber:  "1234",
        accountName: "John Smith",
        creditFlag: "yes"
     }
@@ -118,7 +147,7 @@ eos
     </Payment>
 </SecurePayMessage>
 eos
-    #TODO: stub the response here
+  
     stub_request(:post, "https://test.securepay.com.au/xmlapi/directentry").
         to_return(:body => response_body, :status => 200, :headers => { 'Content-Length' => 3 })
  
@@ -131,12 +160,13 @@ eos
     payment = DirectDebit::Securepay::Payment.new
 
     payment_options = {
-       clientID: "xx123",
+       clientID: "xxxxxx123",
        amount: "123",
-       startDate: "20040107",
+       startDate: "20141001",
        numberOfPayments: "12",
-       bsbNumber: "1234",
-       accountNumber:  "56789",
+       paymentInterval: "30",
+       bsbNumber: "123123",
+       accountNumber:  "1234",
        accountName: "John Smith",
        creditFlag: "No"
     }
@@ -152,7 +182,7 @@ eos
     <MerchantInfo>
         <merchantID>ABC0001</merchantID>
     </MerchantInfo>
-    <RequestType>Payment</RequestType>
+    <RequestType>Periodic</RequestType>
     <Status>
         <statusCode>0</statusCode>
         <statusDescription>Normal</statusDescription>
@@ -176,15 +206,15 @@ eos
                  <periodicType>1</periodicType>
                  <paymentInterval/>
                  <numberOfPayments/>
-                 <startDate>20041101</startDate>
-                 <endDate>20041101</endDate>
+                 <startDate>20141001</startDate>
+                 <endDate>200151001</endDate>
             </PeriodicItem>
         </PeriodicList>
     </Periodic>
 </SecurePayMessage>
 eos
     #TODO: stub the response here
-    stub_request(:post, "https://test.securepay.com.au/xmlapi/directentry").
+    stub_request(:post, "https://test.securepay.com.au/xmlapi/periodic").
         to_return(:body => response_body, :status => 200, :headers => { 'Content-Length' => 3 })
 
 
