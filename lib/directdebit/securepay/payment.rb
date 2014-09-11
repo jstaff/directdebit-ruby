@@ -62,6 +62,22 @@ module DirectDebit
         parse(response, "add_periodic_payment_response")
       end
 
+       def delete_periodic_payment(options={})
+        create_request('periodic') do |xml|
+          xml.SecurePayMessage do
+            add_message_merchant_info(xml)
+            xml.RequestType "Periodic"
+              xml.Periodic do
+                xml.PeriodicList(:count => 1) do
+                  add_xml_perodic_item(xml, "", "delete" ,"debit", options)
+                end
+              end
+          end
+        end
+        response = request_it!
+        parse(response, "add_periodic_payment_response")
+      end
+
       def add_message_merchant_info(xml)
          add_xml_message_info(xml)
          add_xml_merchant_info(xml)
@@ -84,25 +100,28 @@ module DirectDebit
           xml.actionType "delete" if action_type == "delete"
           xml.actionType "trigger" if action_type == "trigger"
           xml.clientID options[:clientID]
-          add_xml_credit_card_info(xml, options) if payment_type == "credit"
-          add_xml_direct_entry_info(xml, options) if payment_type == "debit"     
-          xml.amount options[:amount]
-          case type
-          when "Day Based"
-            xml.periodicType PERIODIC_TYPES.key('Day Based')
-            xml.startDate options[:startDate]
-            xml.paymentInterval options[:paymentInterval]
-            xml.numberOfPayments options[:numberOfPayments]
-          when "Calendar Based"
-            xml.periodicType PERIODIC_TYPES.key('Calendar Based')
-            xml.startDate options[:startDate]
-            xml.paymentInterval options[:paymentInterval]
-            xml.numberOfPayments options[:numberOfPayments]
-          when "Triggered"
-            xml.periodicType PERIODIC_TYPES.key('Day Based Periodic Payment')
-          else 
-            xml.periodicType PERIODIC_TYPES.key('Once Off')
-            xml.startDate options[:startDate]
+
+          if  action_type == "add" ||  action_type == "trigger"
+            add_xml_credit_card_info(xml, options) if payment_type == "credit"
+            add_xml_direct_entry_info(xml, options) if payment_type == "debit"     
+            xml.amount options[:amount]
+            case type
+            when "Day Based"
+              xml.periodicType PERIODIC_TYPES.key('Day Based')
+              xml.startDate options[:startDate]
+              xml.paymentInterval options[:paymentInterval]
+              xml.numberOfPayments options[:numberOfPayments]
+            when "Calendar Based"
+              xml.periodicType PERIODIC_TYPES.key('Calendar Based')
+              xml.startDate options[:startDate]
+              xml.paymentInterval options[:paymentInterval]
+              xml.numberOfPayments options[:numberOfPayments]
+            when "Triggered"
+              xml.periodicType PERIODIC_TYPES.key('Day Based Periodic Payment')
+            else 
+              xml.periodicType PERIODIC_TYPES.key('Once Off')
+              xml.startDate options[:startDate]
+            end
           end
 
         end
@@ -162,6 +181,15 @@ module DirectDebit
       end
 
       def parse_add_periodic_payment_response(xml)
+        data   = {}
+        data[:statusCode] = xml.xpath("SecurePayMessage/Status/statusCode").text
+        data[:statusDescription] = xml.xpath("SecurePayMessage/Status/statusDescription").text
+        data[:responseCode] = xml.xpath("SecurePayMessage/Periodic/PeriodicList/PeriodicItem/responseCode").text
+        data[:responseText] = xml.xpath("SecurePayMessage/Periodic/PeriodicList/PeriodicItem/responseText").text
+        return data
+      end
+
+      def parse_delete_periodic_payment_response(xml)
         data   = {}
         data[:statusCode] = xml.xpath("SecurePayMessage/Status/statusCode").text
         data[:statusDescription] = xml.xpath("SecurePayMessage/Status/statusDescription").text

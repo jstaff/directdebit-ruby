@@ -228,4 +228,56 @@ eos
         :responseText => "Successful"}, response)
   end
 
+
+  def test_delete_periodic_payment
+    payment = DirectDebit::Securepay::Payment.new
+
+    payment_options = {
+       clientID: "xxxxxx123",
+    }
+
+    response_body=<<-eos
+<?xml version="1.0" encoding="UTF-8"?>
+<SecurePayMessage>
+    <MessageInfo>
+        <messageID>8af793f9af34bea0cf40f5fb750f64</messageID>
+        <messageTimestamp>20042303111226938000+660</messageTimestamp>
+        <apiVersion>xml-4.2</apiVersion>
+    </MessageInfo>
+    <MerchantInfo>
+        <merchantID>ABC0001</merchantID>
+    </MerchantInfo>
+    <RequestType>Periodic</RequestType>
+    <Status>
+        <statusCode>0</statusCode>
+        <statusDescription>Normal</statusDescription>
+    </Status>
+    <Periodic>
+        <PeriodicList count="1">
+             <PeriodicItem ID="1">
+                 <actionType>delete</actionType>
+                 <clientID>test</clientID>
+                 <responseCode>00</responseCode>
+                 <responseText>Successful</responseText>
+                 <successful>yes</successful>
+            </PeriodicItem>
+        </PeriodicList>
+    </Periodic>
+</SecurePayMessage>
+eos
+    #TODO: stub the response here
+    stub_request(:post, "https://test.securepay.com.au/xmlapi/periodic").
+        to_return(:body => response_body, :status => 200, :headers => { 'Content-Length' => 3 })
+
+
+    response = payment.delete_periodic_payment(payment_options)
+    puts "#######################"
+    puts "response #{response}"
+    assert_equal(
+        {:statusCode => "0", 
+        :statusDescription => "Normal", 
+        :responseCode => "00",
+        :responseText => "Successful"}, response)
+  end
+
 end

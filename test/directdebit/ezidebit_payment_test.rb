@@ -154,4 +154,5 @@ eos
     response = payment.get_payments()
     assert_equal(1, response)
   end
+
 end
