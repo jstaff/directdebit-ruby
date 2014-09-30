@@ -38,7 +38,6 @@ eos
 
 
     response = payment.add_payment(payment_options)
-    puts "response #{response}"
     assert_equal({:Status=>"S", :Error=>"0", :ErrorMessage=>""}, response)
   end
 
@@ -113,36 +112,58 @@ eos
     response_body=<<-eos
 <s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
     <s:Body>
-        <GetPaymentDetailsResponse xmlns="https://px.ezidebit.com.au/">
-        <GetPaymentDetailsResult xmlns:i="http://www.w3.org/2001/XMLSchema instance">
-        <Data>
-            <Payment>
-                <BankFailedReason/>
-                <BankReceiptID>430357</BankReceiptID>
-                <BankReturnCode>O</BankReturnCode>
-                <CustomerName>Test</CustomerName>
-                <DebitDate>2011 01 04T00:00:00</DebitDate>
-                <EziDebitCustomerID/>
-                <InvoiceID>0</InvoiceID>
-                <PaymentAmount>20</PaymentAmount>
-                <PaymentID>WEB48992</PaymentID>
-                <PaymentMethod>CR</PaymentMethod>
-                <PaymentReference>45</PaymentReference>
-                <PaymentSource>WEB</PaymentSource>
-                <PaymentStatus>P</PaymentStatus>
-                <SettlementDate i:nil="true"/>
-                <ScheduledAmount>19.10</ScheduledAmount>
-                <TransactionFeeClient>0.99</TransactionFeeClient>
-                <TransactionFeeCustomer>0</TransactionFeeCustomer>
-                <TransactionTime>2011 01 19T11:45:00</TransactionTime>
-                <YourGeneralReference/>
-                <YourSystemReference/>
-            <payment>
-        </Data>
-        <Error>0</Error>
-        <ErrorMessage i:nil="true"/>
-        </GetPaymentDetailsResult>
-        </GetPaymentDetailsResponse>
+        <GetPaymentsResponse xmlns="https://px.ezidebit.com.au/">
+            <GetPaymentsResult xmlns:i="http://www.w3.org/2001/XMLSchema instance">
+                <Data>
+                    <Payment>
+                        <BankFailedReason/>
+                        <BankReceiptID>430357</BankReceiptID>
+                        <BankReturnCode>O</BankReturnCode>
+                        <CustomerName>Test</CustomerName>
+                        <DebitDate>2011 01 04T00:00:00</DebitDate>
+                        <EziDebitCustomerID/>
+                        <InvoiceID>0</InvoiceID>
+                        <PaymentAmount>20</PaymentAmount>
+                        <PaymentID>WEB48992</PaymentID>
+                        <PaymentMethod>CR</PaymentMethod>
+                        <PaymentReference>45</PaymentReference>
+                        <PaymentSource>WEB</PaymentSource>
+                        <PaymentStatus>P</PaymentStatus>
+                        <SettlementDate i:nil="true"/>
+                        <ScheduledAmount>19.10</ScheduledAmount>
+                        <TransactionFeeClient>0.99</TransactionFeeClient>
+                        <TransactionFeeCustomer>0</TransactionFeeCustomer>
+                        <TransactionTime>2011 01 19T11:45:00</TransactionTime>
+                        <YourGeneralReference/>
+                        <YourSystemReference/>
+                    </Payment>
+                    <Payment>
+                        <BankFailedReason/>
+                        <BankReceiptID>430358</BankReceiptID>
+                        <BankReturnCode>O</BankReturnCode>
+                        <CustomerName>Test</CustomerName>
+                        <DebitDate>2011 02 04T00:00:00</DebitDate>
+                        <EziDebitCustomerID/>
+                        <InvoiceID>1</InvoiceID>
+                        <PaymentAmount>20</PaymentAmount>
+                        <PaymentID>WEB48993</PaymentID>
+                        <PaymentMethod>CR</PaymentMethod>
+                        <PaymentReference>46</PaymentReference>
+                        <PaymentSource>WEB</PaymentSource>
+                        <PaymentStatus>P</PaymentStatus>
+                        <SettlementDate i:nil="true"/>
+                        <ScheduledAmount>19.11</ScheduledAmount>
+                        <TransactionFeeClient>1.99</TransactionFeeClient>
+                        <TransactionFeeCustomer>0</TransactionFeeCustomer>
+                        <TransactionTime>2011 01 19T12:45:00</TransactionTime>
+                        <YourGeneralReference/>
+                        <YourSystemReference/>
+                    <Payment>
+                </Data>
+            <Error>0</Error>
+            <ErrorMessage i:nil="true"/>
+            </GetPaymentsResult>
+        </GetPaymentsResponse>
     </s:Body>
 </s:Envelope>
 eos
@@ -152,7 +173,7 @@ eos
 
 
     response = payment.get_payments()
-    assert_equal(1, response)
+    assert_equal(2, response.count)
   end
 
 end
