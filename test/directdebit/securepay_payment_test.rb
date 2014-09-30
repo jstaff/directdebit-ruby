@@ -233,7 +233,7 @@ eos
     payment = DirectDebit::Securepay::Payment.new
 
     payment_options = {
-       clientID: "xxxxxx123",
+       clientID: "xxxxxx123"
     }
 
     response_body=<<-eos

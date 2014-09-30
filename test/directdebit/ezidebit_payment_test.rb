@@ -5,7 +5,7 @@ class CustomerTest < Minitest::Unit::TestCase
   DirectDebit.logger.level = Logger::DEBUG
   DirectDebit::Ezidebit.api_base="https://api.demo.ezidebit.com.au/"
   DirectDebit::Ezidebit.api_version="v3-3"
-  DirectDebit::Ezidebit.api_digital_key='89FCA516-6C43-428F-A2E8-729ABF7CB9BE'
+  DirectDebit::Ezidebit.api_digital_key='XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX'
 
   def test_add_payment
     payment = DirectDebit::Ezidebit::Payment.new
