@@ -17,7 +17,7 @@ class CustomerTest < Minitest::Unit::TestCase
        bsbNumber: "123123",
        accountNumber:  "1234",
        accountName: "John Smith",
-       creditFlag: "yes"
+       creditFlag: "no"
     }
 
     response_body=<<-eos
@@ -63,7 +63,7 @@ eos
         to_return(:body => response_body, :status => 200, :headers => { 'Content-Length' => 3 })
 
 
-    response = payment.add_one_time_payment('debit', payment_options)
+    response = payment.add_one_time_payment('directdebit', payment_options)
     puts "#######################"
     puts "response #{response}"
     assert_equal({:statusCode=>"000", :statusDescription=>"Normal"}, response)
@@ -77,7 +77,7 @@ eos
        purchaseOrderNo: "INV-123",
        accountNumber:  "1234",
        accountName: "John Smith",
-       creditFlag: "yes"
+       creditFlag: "no"
     }
 
     response_body=<<-eos
@@ -93,7 +93,7 @@ eos
         to_return(:body => response_body, :status => 200, :headers => { 'Content-Length' => 3 })
  
     assert_raises DirectDebit::SoapError do 
-        payment.add_one_time_payment('debit', payment_options)
+        payment.add_one_time_payment('directdebit', payment_options)
     end
 
 end
@@ -107,7 +107,7 @@ end
        bsbNumber: "123123A",
        accountNumber:  "1234",
        accountName: "John Smith",
-       creditFlag: "yes"
+       creditFlag: "no"
     }
 
     response_body=<<-eos
@@ -152,7 +152,7 @@ eos
         to_return(:body => response_body, :status => 200, :headers => { 'Content-Length' => 3 })
  
     assert_raises DirectDebit::SoapError do 
-        payment.add_one_time_payment('debit', payment_options)
+        payment.add_one_time_payment('directdebit', payment_options)
     end
   end
 
@@ -160,7 +160,7 @@ eos
     payment = DirectDebit::Securepay::Payment.new
 
     payment_options = {
-       clientID: "xxxxxx123",
+       clientID: "xxxxxx123a",
        amount: "123",
        startDate: "20141001",
        numberOfPayments: "12",
@@ -168,7 +168,7 @@ eos
        bsbNumber: "123123",
        accountNumber:  "1234",
        accountName: "John Smith",
-       creditFlag: "No"
+       creditFlag: "no"
     }
 
     response_body=<<-eos
@@ -218,7 +218,7 @@ eos
         to_return(:body => response_body, :status => 200, :headers => { 'Content-Length' => 3 })
 
 
-    response = payment.add_periodic_payment(payment_options)
+    response = payment.add_periodic_payment('directdebit', 'Day Based', payment_options)
     puts "#######################"
     puts "response #{response}"
     assert_equal(
@@ -265,12 +265,12 @@ eos
     </Periodic>
 </SecurePayMessage>
 eos
-    #TODO: stub the response here
+    
     stub_request(:post, "https://test.securepay.com.au/xmlapi/periodic").
         to_return(:body => response_body, :status => 200, :headers => { 'Content-Length' => 3 })
 
 
-    response = payment.delete_periodic_payment(payment_options)
+    response = payment.delete_periodic_payment("directdebit", payment_options)
     puts "#######################"
     puts "response #{response}"
     assert_equal(
@@ -278,6 +278,142 @@ eos
         :statusDescription => "Normal", 
         :responseCode => "00",
         :responseText => "Successful"}, response)
+  end
+
+  def test_add_periodic_payment_for_trigger
+    payment = DirectDebit::Securepay::Payment.new
+
+    payment_options = {
+       clientID: "xxxxxx123abe",
+       amount: "001",
+       bsbNumber: "123123",
+       accountNumber:  "1234",
+       accountName: "Jane Smith",
+       creditFlag: "yes"
+    }
+
+
+    response_body=<<-eos
+<?xml version="1.0" encoding="UTF-8"?>
+<SecurePayMessage>
+    <MessageInfo>
+        <messageID>8af793f9af34bea0cf40f5fb750f64</messageID>
+        <messageTimestamp>20042303111226938000+660</messageTimestamp>
+        <apiVersion>xml-4.2</apiVersion>
+    </MessageInfo>
+    <MerchantInfo>
+        <merchantID>ABC0001</merchantID>
+    </MerchantInfo>
+    <RequestType>Periodic</RequestType>
+    <Status>
+        <statusCode>0</statusCode>
+        <statusDescription>Normal</statusDescription>
+    </Status>
+    <Periodic>
+        <PeriodicList count="1">
+             <PeriodicItem ID="1">
+                 <actionType>add</actionType>
+                 <clientID>test</clientID>
+                 <responseCode>00</responseCode>
+                 <responseText>Successful</responseText>
+                 <successful>yes</successful>
+                 <DirectEntryInfo>
+                    <bsbNumber>123123</bsbNumber>
+                    <accountNumber>1234</accountNumber>
+                    <accountName>Jane Smith</accountName>
+                    <creditFlag>yes</creditFlag>
+                 </DirectEntryInfo>
+                 <amount>001</amount>
+                 <currency>AUD</currency>
+                 <periodicType>4</periodicType>
+                 <paymentInterval/>
+                 <numberOfPayments/>
+            </PeriodicItem>
+        </PeriodicList>
+    </Periodic>
+</SecurePayMessage>
+eos
+
+    stub_request(:post, "https://test.securepay.com.au/xmlapi/periodic").
+        to_return(:body => response_body, :status => 200, :headers => { 'Content-Length' => 3 })
+
+
+    response = payment.add_periodic_payment('directdebit', 'Triggered', payment_options)
+
+    puts "#######################"
+    puts "response #{response}"
+    assert_equal(
+        {:statusCode => "0", 
+        :statusDescription => "Normal", 
+        :responseCode => "00",
+        :responseText => "Successful"}, response)
+  end
+
+  def test_trigger_periodic_payment
+    payment = DirectDebit::Securepay::Payment.new
+
+       response_body=<<-eos
+<?xml version="1.0" encoding="UTF-8"?>
+<SecurePayMessage>
+    <MessageInfo>
+        <messageID>8af793f9af34bea0cf40f5fb750f64</messageID>
+        <messageTimestamp>20042303111226938000+660</messageTimestamp>
+        <apiVersion>xml-4.2</apiVersion>
+    </MessageInfo>
+    <MerchantInfo>
+        <merchantID>ABC0001</merchantID>
+    </MerchantInfo>
+    <RequestType>Periodic</RequestType>
+    <Status>
+        <statusCode>0</statusCode>
+        <statusDescription>Normal</statusDescription>
+    </Status>
+    <Periodic>
+        <PeriodicList count="1">
+             <PeriodicItem ID="1">
+                 <actionType>trigger</actionType>
+                 <clientID>xxxxxx123ab</clientID>
+                 <responseCode>00</responseCode>
+                 <responseText>Transaction Accepted</responseText>
+                 <successful>yes</successful>
+                 <txnType>17</txnType>
+                 <amount>777</amount>
+                 <currency>AUD</currency>
+                 <txnID>000258</txnID>
+                 <receipt>094373</receipt>
+                 <ponum>094373xxxxxx123ab</ponum>
+                 <settlementDate>20141210</settlementDate>
+                  <DirectEntryInfo>
+                    <bsbNumber>123123</bsbNumber>
+                    <accountNumber>1234</accountNumber>
+                    <accountName>Jane Smith</accountName>
+                    <creditFlag>yes</creditFlag>
+                 </DirectEntryInfo>
+            </PeriodicItem>
+        </PeriodicList>
+    </Periodic>
+</SecurePayMessage>
+eos
+
+    stub_request(:post, "https://test.securepay.com.au/xmlapi/periodic").
+        to_return(:body => response_body, :status => 200, :headers => { 'Content-Length' => 3 })
+
+
+    payment_options = {
+       clientID: "xxxxxx123ab",
+       amount: "777"
+    }
+
+    response = payment.trigger_periodic_payment('directdebit', payment_options)
+
+    puts "#######################"
+    puts "response #{response}"
+    assert_equal(
+        {:statusCode => "0", 
+        :statusDescription => "Normal", 
+        :responseCode => "00",
+        :responseText => "Transaction Accepted"}, response)
+
   end
 
 end

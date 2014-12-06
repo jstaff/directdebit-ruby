@@ -26,17 +26,18 @@ module DirectDebit
         4 => "Triggered"
       }
 
+      DEFAULT_PERIDOIC_TYPE = "Once Off"
       DEFAULT_TRANSACTION_SOURCE = 23 #FROM XML
 
-      def add_one_time_payment(payment_type='debit', options={})
+      def add_one_time_payment(payment_type='directdebit', options={})
         create_request('directentry') do |xml|
           xml.SecurePayMessage do
             add_message_merchant_info(xml)
             xml.RequestType "Payment"
             xml.Payment do
               xml.TxnList(:count => 1) do
-                 txn_type_code = TRANSACTION_TYPES.index('Direct Entry Debit') if payment_type == 'debit'
-                 txn_type_code = TRANSACTION_TYPES.index('Standard Payment') if payment_type =='credit'
+                 txn_type_code = TRANSACTION_TYPES.index('Direct Entry Debit') if payment_type == 'directdebit'
+                 txn_type_code = TRANSACTION_TYPES.index('Standard Payment') if payment_type =='creditcard'
                  add_xml_transaction_item(xml, txn_type_code, options)
               end
             end
@@ -46,14 +47,14 @@ module DirectDebit
         parse(response, "add_one_time_payment_response")
       end
 
-      def add_periodic_payment(options={})
+      def add_periodic_payment(payment_type='directdebit', periodic_type='Day Based', options={})
         create_request('periodic') do |xml|
           xml.SecurePayMessage do
             add_message_merchant_info(xml)
             xml.RequestType "Periodic"
               xml.Periodic do
                 xml.PeriodicList(:count => 1) do
-                  add_xml_perodic_item(xml, "Day Based", "add" ,"debit", options)
+                  add_xml_perodic_item(xml, "add", periodic_type, payment_type, options)
                 end
               end
           end
@@ -62,14 +63,30 @@ module DirectDebit
         parse(response, "add_periodic_payment_response")
       end
 
-       def delete_periodic_payment(options={})
+      def trigger_periodic_payment(payment_type='directdebit', options={})
+       create_request('periodic') do |xml|
+        xml.SecurePayMessage do
+          add_message_merchant_info(xml)
+          xml.RequestType "Periodic"
+            xml.Periodic do
+              xml.PeriodicList(:count => 1) do
+                add_xml_perodic_item(xml, "trigger", "Triggered", payment_type, options)
+              end
+            end
+          end
+        end
+        response = request_it!
+        parse(response, "add_periodic_payment_response")
+      end
+
+      def delete_periodic_payment(payment_type='directdebit', options={})
         create_request('periodic') do |xml|
           xml.SecurePayMessage do
             add_message_merchant_info(xml)
             xml.RequestType "Periodic"
               xml.Periodic do
                 xml.PeriodicList(:count => 1) do
-                  add_xml_perodic_item(xml, "", "delete" ,"debit", options)
+                  add_xml_perodic_item(xml, "delete", "", "directdebit", options)
                 end
               end
           end
@@ -94,7 +111,7 @@ module DirectDebit
         end
       end
 
-      def add_xml_perodic_item(xml, type="Once Off", action_type="add", payment_type="debit", options={})
+      def add_xml_perodic_item(xml, action_type="add", periodic_type=DEFAULT_PERIDOIC_TYPE, payment_type="directdebit", options={})
         xml.PeriodicItem(:ID => 1) do
           xml.actionType "add" if action_type == "add"
           xml.actionType "delete" if action_type == "delete"
@@ -102,10 +119,10 @@ module DirectDebit
           xml.clientID options[:clientID]
 
           if  action_type == "add" ||  action_type == "trigger"
-            add_xml_credit_card_info(xml, options) if payment_type == "credit"
-            add_xml_direct_entry_info(xml, options) if payment_type == "debit"     
-            xml.amount options[:amount]
-            case type
+            add_xml_credit_card_info(xml, options) if payment_type == "creditcard" if  action_type == "add"
+            add_xml_direct_entry_info(xml, options) if payment_type == "directdebit" if  action_type == "add"
+            xml.amount options[:amount] 
+            case  periodic_type
             when "Day Based"
               xml.periodicType PERIODIC_TYPES.key('Day Based')
               xml.startDate options[:startDate]
@@ -117,7 +134,7 @@ module DirectDebit
               xml.paymentInterval options[:paymentInterval]
               xml.numberOfPayments options[:numberOfPayments]
             when "Triggered"
-              xml.periodicType PERIODIC_TYPES.key('Day Based Periodic Payment')
+              xml.periodicType PERIODIC_TYPES.key('Triggered')
             else 
               xml.periodicType PERIODIC_TYPES.key('Once Off')
               xml.startDate options[:startDate]
