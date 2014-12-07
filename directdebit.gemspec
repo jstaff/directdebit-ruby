@@ -10,7 +10,7 @@ Gem::Specification.new do |s|
   s.description = "Ruyb Gem for consuming direct debit payment APIs "
   s.authors     = ["Jason Stafford"]
   s.email       = 'jasonstaff17@gmail.com'
-  s.homepage    = 'https://github.com/jstaff/ezidebit-ruby/'
+  s.homepage    = 'https://github.com/jstaff/directdebit-ruby/'
   s.license     = 'MIT'
 
   s.add_dependency "logger"
