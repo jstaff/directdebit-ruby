@@ -1,4 +1,4 @@
-ezidebit-ruby
+directdebit-ruby
 =============
 
 Ezidebit API bindings for Ruby
@@ -7,7 +7,7 @@ Ezidebit-ruby is a ruby client for the Ezidebit Web Services SOAP API.
 
 ### Getting Started
 
-gem 'ezidebit', :github => 'jstaff/ezidebit-ruby', :branch => 'master'
+gem 'directdebit', :github => 'jstaff/directdebit-ruby', :branch => 'master'
 
 ## Configuration
 
