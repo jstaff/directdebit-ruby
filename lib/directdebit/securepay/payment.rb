@@ -194,6 +194,7 @@ module DirectDebit
         data   = {}
         data[:statusCode] = xml.xpath("SecurePayMessage/Status/statusCode").text
         data[:statusDescription] = xml.xpath("SecurePayMessage/Status/statusDescription").text
+        data[:settlementDate] = xml.xpath("SecurePayMessage/Payment/TxnList/Txn/settlementDate").text
         return data
       end
 

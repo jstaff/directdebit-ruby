@@ -66,7 +66,7 @@ eos
     response = payment.add_one_time_payment('directdebit', payment_options)
     puts "#######################"
     puts "response #{response}"
-    assert_equal({:statusCode=>"000", :statusDescription=>"Normal"}, response)
+    assert_equal({:statusCode=>"000", :statusDescription=>"Normal", :settlementDate=>"20040323"}, response)
   end
 
  def test_status_error
