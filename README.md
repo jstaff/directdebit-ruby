@@ -1,9 +1,9 @@
 directdebit-ruby
 =============
 
-Ezidebit API bindings for Ruby
+Direct debit API bindings for Ruby
 
-Ezidebit-ruby is a ruby client for the Ezidebit Web Services SOAP API.
+directdebit-ruby is a ruby client for the Ezidebit and SecurePay Web Services.
 
 ### Getting Started
 
