@@ -162,8 +162,8 @@ module DirectDebit
 
       def add_xml_credit_card_info(xml, options={})
         xml.CreditCardInfo do
-          xml.cardNumder options[:cardNumber]
-          xml.ccv options[:ccv] || ""
+          xml.cardNumber options[:cardNumber]
+          xml.cvv options[:cvv] || ""
           xml.expiryDate options[:expiryDate]
         end 
       end

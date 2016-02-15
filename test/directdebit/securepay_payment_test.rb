@@ -64,12 +64,71 @@ eos
 
 
     response = payment.add_one_time_payment('directdebit', payment_options)
-    puts "#######################"
     puts "response #{response}"
     assert_equal({:statusCode=>"000", :statusDescription=>"Normal", :settlementDate=>"20040323"}, response)
   end
 
- def test_status_error
+  def test_add_one_time_payment_for_credit
+    payment = DirectDebit::Securepay::Payment.new
+
+    payment_options = {
+       amount: "123",
+       purchaseOrderNo: "INV-1234",
+       cardNumber: "4444333322221111",
+       cvv:  "123",
+       expiryDate: "09/15",
+       creditFlag: "no"
+    }
+
+    response_body=<<-eos
+<?xml version="1.0" encoding="UTF-8"?>
+<SecurePayMessage>
+    <MessageInfo>
+        <messageID>8af793f9af34bea0cf40f5fb750f64</messageID>
+        <messageTimestamp>20042303111226938000+660</messageTimestamp>
+        <apiVersion>xml-4.2</apiVersion>
+    </MessageInfo>
+    <MerchantInfo>
+        <merchantID>ABC0001</merchantID>
+    </MerchantInfo>
+    <RequestType>Payment</RequestType>
+    <Status>
+        <statusCode>000</statusCode>
+        <statusDescription>Normal</statusDescription>
+    </Status>
+    <Payment>
+        <TxnList count="1">
+             <Txn ID="1">
+             <txnType>15</txnType>
+             <txnSource>23</txnSource>
+             <amount>200</amount>
+             <purchaseOrderNo>test</purchaseOrderNo>
+             <approved>Yes</approved>
+             <responseCode>00</responseCode>
+             <responseText>Transaction Accepted</responseText>
+             <settlementDate>20040323</settlementDate>
+             <txnID>009887</txnID>
+             <CreditEntryInfo> 
+                 <pan>444433...1111</pan> 
+                 <expiryDate>09/15</<expiryDate>
+                 <recurringFlag>no</recurringFlag>
+             </DirectEntryInfo> 
+             </Txn>
+        </TxnList>
+    </Payment>
+</SecurePayMessage>
+eos
+    #TODO: stub the response here
+    stub_request(:post, "https://test.securepay.com.au/xmlapi/directentry").
+        to_return(:body => response_body, :status => 200, :headers => { 'Content-Length' => 3 })
+
+
+    response = payment.add_one_time_payment('creditcard', payment_options)
+    puts "response #{response}"
+    assert_equal({:statusCode=>"000", :statusDescription=>"Normal", :settlementDate=>"20040323"}, response)
+  end
+
+  def test_status_error
     payment = DirectDebit::Securepay::Payment.new
 
     payment_options = {
