@@ -30,9 +30,9 @@ module DirectDebit
       DEFAULT_TRANSACTION_SOURCE = 23 #FROM XML
 
       def add_one_time_payment(payment_type='directdebit', options={})
-        create_request('directentry') do |xml|
+        create_request('payment') do |xml|
           xml.SecurePayMessage do
-            add_message_merchant_info(xml)
+            add_message_merchant_info(xml, 'payment')
             xml.RequestType "Payment"
             xml.Payment do
               xml.TxnList(:count => 1) do
@@ -50,7 +50,7 @@ module DirectDebit
       def add_periodic_payment(payment_type='directdebit', periodic_type='Day Based', options={})
         create_request('periodic') do |xml|
           xml.SecurePayMessage do
-            add_message_merchant_info(xml)
+            add_message_merchant_info(xml, 'periodic')
             xml.RequestType "Periodic"
               xml.Periodic do
                 xml.PeriodicList(:count => 1) do
@@ -66,7 +66,7 @@ module DirectDebit
       def trigger_periodic_payment(payment_type='directdebit', options={})
        create_request('periodic') do |xml|
         xml.SecurePayMessage do
-          add_message_merchant_info(xml)
+          add_message_merchant_info(xml, 'periodic')
           xml.RequestType "Periodic"
             xml.Periodic do
               xml.PeriodicList(:count => 1) do
@@ -82,7 +82,7 @@ module DirectDebit
       def delete_periodic_payment(payment_type='directdebit', options={})
         create_request('periodic') do |xml|
           xml.SecurePayMessage do
-            add_message_merchant_info(xml)
+            add_message_merchant_info(xml, 'periodic')
             xml.RequestType "Periodic"
               xml.Periodic do
                 xml.PeriodicList(:count => 1) do
@@ -95,20 +95,23 @@ module DirectDebit
         parse(response, "add_periodic_payment_response")
       end
 
-      def add_message_merchant_info(xml)
-         add_xml_message_info(xml)
+      def add_message_merchant_info(xml, api_type)
+         add_xml_message_info_periodic(xml) if api_type == 'periodic'
+         add_xml_message_info_payment(xml) if api_type == 'payment'
          add_xml_merchant_info(xml)
       end
 
       def add_xml_transaction_item(xml, txn_type="0", options={})
-        xml.Txn do
-          xml.txnType txn_type
-          xml.txnSource DEFAULT_TRANSACTION_SOURCE
-          xml.purchaseOrderNo options[:purchaseOrderNo]
-          xml.amount options[:amount]
-          add_xml_credit_card_info(xml, options) if  [0,4, 6, 10, 11].include?(txn_type) #credit types
-          add_xml_direct_entry_info(xml, options) if [15, 17].include?(txn_type) #direct debit types
-        end
+          xml.Txn(:ID => "1") do
+            xml.txnType txn_type
+            xml.txnSource DEFAULT_TRANSACTION_SOURCE
+            xml.amount options[:amount]
+            xml.recurring "no"
+            xml.currenty "AUD"
+            xml.purchaseOrderNo options[:purchaseOrderNo]
+            add_xml_credit_card_info(xml, options) if  [0,4, 6, 10, 11].include?(txn_type) #credit types
+            add_xml_direct_entry_info(xml, options) if [15, 17].include?(txn_type) #direct debit types
+          end
       end
 
       def add_xml_perodic_item(xml, action_type="add", periodic_type=DEFAULT_PERIDOIC_TYPE, payment_type="directdebit", options={})
@@ -144,11 +147,20 @@ module DirectDebit
         end
       end
 
-      def add_xml_message_info(xml)
+      def add_xml_message_info_periodic(xml)
         xml.MessageInfo do
           xml.messageID "#{rand(10000)}#{(Time.now.to_f * 1000).to_i}"
           xml.messageTimestamp Time.now.strftime("%Y%d%m%H%M%S%L000s010")
           xml.apiVersion DirectDebit::Securepay.api_version
+          xml.timeoutValue DirectDebit::Securepay::api_timeout
+        end
+      end
+
+      def add_xml_message_info_payment(xml)
+        xml.MessageInfo do
+          xml.messageID "#{rand(10000)}#{(Time.now.to_f * 1000).to_i}"
+          xml.messageTimestamp Time.now.strftime("%Y%d%m%H%M%S%L000s010")
+          xml.apiVersion 'xml-4.2'
           xml.timeoutValue DirectDebit::Securepay::api_timeout
         end
       end
