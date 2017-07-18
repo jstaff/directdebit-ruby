@@ -7,7 +7,9 @@ directdebit-ruby is a ruby client for the Ezidebit and SecurePay Web Services.
 
 ### Getting Started
 
+```
 gem 'directdebit', :github => 'jstaff/directdebit-ruby', :branch => 'master'
+````
 
 ## Configuration
 
